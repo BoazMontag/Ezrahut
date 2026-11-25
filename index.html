@@ -9,11 +9,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rubik:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
-:root{--ink:#1d1a2f;--cream:#fff8e7;--sky:#6ecbff;--grass:#7bd85a;--yel:#ffd23f;--pink:#ff6fa5;--pur:#8f5cff;--org:#ff9f1c;--red:#ff4d5e;--grn:#2ec27e;--blue:#3a86ff;--bg:#2b2250}
+:root{color-scheme:dark;--ink:#1d1a2f;--cream:#fff8e7;--sky:#6ecbff;--grass:#7bd85a;--yel:#ffd23f;--pink:#ff6fa5;--pur:#8f5cff;--org:#ff9f1c;--red:#ff4d5e;--grn:#2ec27e;--blue:#3a86ff;--bg:#2b2250}
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Rubik',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;direction:rtl;background:var(--bg);color:var(--ink);font-family:'Rubik',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
 body{min-height:100vh;background-color:var(--bg);background-image:radial-gradient(#ffffff22 1px,transparent 1px),radial-gradient(#ffffff14 1px,transparent 1px);background-size:24px 24px,40px 40px;background-position:0 0,12px 20px}
-#app{max-width:480px;margin:0 auto;padding:12px 16px 48px;min-height:100vh}
+#app{max-width:480px;margin:0 auto;padding-block:12px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));min-height:100vh}
 .px{font-family:'Press Start 2P','Rubik',monospace;letter-spacing:0}
 svg{image-rendering:pixelated;display:inline-block;vertical-align:middle}
 h1,h2,h3{margin:.2em 0}
@@ -131,7 +131,16 @@ code{background:var(--ink);color:var(--yel);padding:2px 6px;direction:ltr;displa
 /* ---------- state ---------- */
 const LS='ezrahut-pixel-v1';
 const S=Object.assign({xp:0,streak:0,best:0,stats:{},prog:{},snd:true},(()=>{try{return JSON.parse(localStorage.getItem(LS))||{}}catch(e){return{}}})());
-const save=()=>{try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}};
+let cloud=null,cloudT;
+function save(){S.saved=Date.now();try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}
+ if(cloud){clearTimeout(cloudT);cloudT=setTimeout(()=>{cloud.set(JSON.parse(JSON.stringify(S))).catch(()=>{})},1200)}}
+/* cloud sync when running as a claude.ai artifact (private per user) */
+async function initCloud(){try{if(!window.claude||!window.claude.use)return;
+ const [user,db]=await Promise.all([window.claude.use('user'),window.claude.use('db')]);if(!user||!db)return;
+ const id=await user.id();if(!id)return;const ref=db.doc('data/users/'+id+'/progress');
+ const snap=await ref.get();const r=snap.exists?snap.data():null;
+ if(r&&(r.saved||0)>(S.saved||0)){Object.assign(S,JSON.parse(JSON.stringify(r)));try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}if(!R&&D)showMap()}
+ cloud=ref;if(!r||(S.saved||0)>(r.saved||0))save();toast('☁️ ההתקדמות נשמרת בחשבון')}catch(e){}}
 const app=document.getElementById('app');
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
@@ -207,6 +216,7 @@ function defHtml(c){return `<div class="def"><div class="dn">${esc(c.name)} <spa
 function clearTimer(){if(timer){clearInterval(timer);timer=null}}
 
 /* ---------- boot ---------- */
+initCloud();
 fetch('concepts.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(d=>{D=d;d.concepts.forEach(c=>C[c.id]=c);showMap()}).catch(()=>{
  app.innerHTML=`<div class="box"><h3>⚠️ לא הצלחתי לטעון את concepts.json</h3><p>המשחק צריך לרוץ דרך שרת מקומי (פתיחה בלחיצה כפולה על הקובץ לא תעבוד).</p><p>פתח/י טרמינל בתיקייה של המשחק והרץ/י:</p><p><code>python3 -m http.server 8000</code></p><p>ואז היכנס/י בדפדפן ל-<code>http://localhost:8000</code></p></div>`});
 
@@ -227,7 +237,7 @@ function showMap(){clearTimer();R=null;
  bindHud();
  app.querySelectorAll('.node').forEach(b=>b.onclick=()=>{sfx('flip');showWorld(b.dataset.w)});
  $('#weak').onclick=showWeak;$('#how').onclick=showHow;
- $('#reset').onclick=()=>{if(confirm('למחוק את כל ההתקדמות, ה-XP והסטטיסטיקה?')){S.xp=0;S.streak=0;S.best=0;S.stats={};S.prog={};save();showMap()}};
+ $('#reset').onclick=e=>{const b=e.currentTarget;if(!b.dataset.c){b.dataset.c=1;b.textContent='בטוח? לחיצה נוספת תמחק הכול';b.style.color='#ff9aa5';return}S.xp=0;S.streak=0;S.best=0;S.stats={};S.prog={};save();showMap()};
  window.scrollTo(0,0)}
 
 function showHow(){const a=D.meta.answer_structure;

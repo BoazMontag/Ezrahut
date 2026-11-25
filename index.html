@@ -119,6 +119,18 @@ details summary{cursor:pointer;font-weight:600}
 .weak .cnt{font-size:9px;white-space:nowrap}
 .cnt .r{color:var(--grn)}.cnt .e{color:var(--red)}
 .small{font-size:13px;opacity:.8}
+.chip.n{background:#ddd8ea;color:#5b5470}
+.learn .big{font-size:24px;font-weight:800;margin:4px 0 2px;line-height:1.3}
+.learn h4,.box h4{margin:12px 0 4px}
+.pieces{margin:4px 0;padding-inline-start:22px}.pieces li{margin:4px 0}
+mark{background:var(--yel);padding:0 2px}
+.why2{margin-top:10px;background:#fff;padding:6px 8px;box-shadow:0 0 0 2px #0002}
+.warn{background:#ffe9c7}
+.cmp{border-inline-start:10px solid var(--c)}.cmph{font-weight:800;font-size:18px;color:var(--ink);margin-bottom:4px}
+.cmp p{margin:4px 0}
+.blank{color:var(--pur)}
+.prog{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:14px}.prog span{width:62px}.prog .bar{height:12px;box-shadow:0 0 0 2px var(--ink)}.prog b{font-size:10px}
+.btn .sd{color:inherit}
 .link{background:none;border:0;color:#d9d2ff;text-decoration:underline;font:inherit;font-size:13px;cursor:pointer;display:block;margin:14px auto 0}
 code{background:var(--ink);color:var(--yel);padding:2px 6px;direction:ltr;display:inline-block}
 </style>
@@ -150,6 +162,7 @@ let D,C={},R=null,timer=null;
 
 const WS={elections:{icon:'🗳️',col:'#ff6fa5',mon:'#ff9ccb'},culture:{icon:'🎭',col:'#8f5cff',mon:'#b99bff'},limits:{icon:'⚖️',col:'#ff9f1c',mon:'#ffc15e'},obedience:{icon:'🚨',col:'#ff4d5e',mon:'#ff9a9a'},rights:{icon:'✊',col:'#2ec27e',mon:'#86e8b2'},defense:{icon:'🛡️',col:'#3a86ff',mon:'#8fb8ff'}};
 const STAGES=[
+ {k:'learn',ic:'📖',n:'לימוד',d:'מושגים חדשים בקבוצות של 3: הסבר, דוגמה, השוואה ותרגול'},
  {k:'flash',ic:'🃏',n:'קלפים',d:'הפוך קלף – ידעתי / לא ידעתי'},
  {k:'id',ic:'👾',n:'זיהוי',d:'סיטואציה ← בחר מושג. פגע במפלצת!'},
  {k:'build',ic:'🧱',n:'בונה תשובה',d:'הצג ← הסבר ← צטט ← קשר'},
@@ -187,9 +200,37 @@ const byWorld=w=>D.concepts.filter(c=>c.world===w).map(c=>c.id);
 const splitW=n=>{const i=n.indexOf(':');return i<0?['',n]:[n.slice(0,i),n.slice(i+1).trim()]};
 const box=id=>S.stats[id]?S.stats[id].b:1;
 const weakFirst=ids=>shuffle(ids).sort((a,b)=>box(a)-box(b));
-function record(id,ok){const s=S.stats[id]||(S.stats[id]={r:0,w:0,b:1});if(ok){s.r++;s.b=Math.min(s.b+1,5)}else{s.w++;s.b=0}s.t=Date.now();save()}
+/* spaced review: minutes until a concept is due again, by box */
+const INT=[1,5,20,60,360,1440];
+function record(id,ok){const s=S.stats[id]||(S.stats[id]={r:0,w:0,b:1});if(ok){s.r++;s.b=Math.min(s.b+1,5)}else{s.w++;s.b=0}s.t=Date.now();s.due=s.t+INT[s.b]*60000;save()}
+const learned=id=>!!(S.stats[id]&&S.stats[id].L);
+function dueIds(){const n=Date.now();return Object.keys(S.stats).filter(id=>C[id]&&S.stats[id].L&&(S.stats[id].due||0)<=n).sort((a,b)=>(S.stats[a].due||0)-(S.stats[b].due||0))}
+function nextBatch(w){const un=byWorld(w).filter(id=>!learned(id));if(!un.length)return [];if(un.length===4)return un;const b=[un[0]];
+ for(const x of C[un[0]].confusables||[])if(b.length<3&&un.includes(x)&&!b.includes(x))b.push(x);
+ for(const x of un)if(b.length<3&&!b.includes(x))b.push(x);return b}
+function learnStars(w){const ids=byWorld(w),l=ids.filter(learned).length;return l===ids.length?3:l>=ids.length/2?2:l>0?1:0}
+const splitSents=t=>t.replace(/(\D)\.\s+/g,'$1.\n').split('\n').map(s=>s.trim()).filter(Boolean);
+function hl(text,quote){let h=esc(text);for(const part of quote.split(/\.\.\.|…/).map(s=>s.trim()).filter(s=>s.length>2)){const e=esc(part);if(h.includes(e))h=h.replace(e,`<mark>${e}</mark>`)}return h}
+function distractorsPool(id,n,pool){const c=C[id],out=[];const P=pool.filter(x=>x!==id&&C[x]);
+ for(const x of shuffle(P))if((c.confusables||[]).includes(x)&&out.length<n)out.push(x);
+ for(const x of shuffle(P))if(!out.includes(x)&&out.length<n)out.push(x);
+ for(const x of distractors(id,n+3))if(!out.includes(x)&&out.length<n)out.push(x);return out}
+/* fill-in-the-blank on the booklet definition */
+const STOP=new Set(['אשר','כדי','בין','למשל','כאשר','אינו','אינן','אינם','להיות','שלא','הזכות','זכות','לכל','אדם','באמצעות','מאוד','אותם','אותו','לבין','בהם','שלה','שלו','עצמו','רבות','רבים']);
+const cleanTok=t=>t.replace(/^[("'״׳–\-]+|[).,:;"'״–\-]+$/g,'');
+const goodW=w=>/^[א-ת]{4,}$/.test(w)&&!STOP.has(w);
+function buildCloze(id){const c=C[id],nameW=new Set(c.name.split(/\s+/).map(cleanTok));
+ let toks=null,idx=-1;
+ for(const s of splitSents(c.definition).slice(0,3)){const t=s.split(/\s+/);const cand=t.map((x,i)=>i).filter(i=>{const w=cleanTok(t[i]);return goodW(w)&&!nameW.has(w)});
+  if(cand.length){cand.sort((a,b)=>cleanTok(t[b]).length-cleanTok(t[a]).length);idx=pick(cand.slice(0,4));toks=t;break}}
+ if(!toks)return null;
+ const word=cleanTok(toks[idx]);const lo=Math.max(0,idx-12),hi=Math.min(toks.length,idx+13);
+ const shown=toks.slice(lo,hi).map((t,i)=>i+lo===idx?esc(t.replace(word,'@@')).replace('@@','<b class="blank">_____</b>'):esc(t)).join(' ');
+ const pool=[];for(const x of distractors(id,8))for(const t of C[x].definition.split(/\s+/)){const w=cleanTok(t);if(goodW(w)&&w!==word&&!c.definition.includes(w)&&Math.abs(w.length-word.length)<=3&&!pool.includes(w))pool.push(w)}
+ const opts=shuffle([word,...shuffle(pool).slice(0,3)]);
+ return {prompt:`<span class="tag">✍️ השלם/י את ההגדרה של: ${esc(c.name)}</span><div class="scene">${lo>0?'… ':''}${shown}${hi<toks.length?' …':''}</div>`,opts:opts.map(w=>({html:esc(w),ok:w===word}))}}
 function weakIds(){return Object.keys(S.stats).filter(id=>C[id]&&S.stats[id].w>0&&S.stats[id].b<=1).sort((a,b)=>(S.stats[b].w-S.stats[b].r)-(S.stats[a].w-S.stats[a].r))}
-function worldStars(w){const p=S.prog[w]||{};return STAGES.reduce((s,st)=>s+(p[st.k]||0),0)}
+function worldStars(w){const p=S.prog[w]||{};return STAGES.reduce((s,st)=>s+(st.k==='learn'?learnStars(w):(p[st.k]||0)),0)}
 function cut(s,n){if(s.length<=n)return s;const k=s.lastIndexOf(' ',n);return s.slice(0,k>n*.5?k:n)+'…'}
 function firstSent(t){const p=t.split(/\.\s+/);let s=p[0];if(s.length<30&&p[1])s+='. '+p[1];return cut(s.replace(/\.$/,''),150)}
 function keyOf(id){const c=C[id];if(c.points.length>=2&&!/^סכנות/.test(c.points[0]))return c.points.slice(0,2).join('; ');return firstSent(c.definition)}
@@ -224,21 +265,54 @@ fetch('concepts.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error(r.st
 function showMap(){clearTimer();R=null;
  const xs=[26,72,30,70,28,72],H=D.worlds.length*112+30;
  const nodes=D.worlds.map((w,i)=>{const nm=splitW(w.name)[1],s=WS[w.id]||{icon:'⭐',col:'#888'};
-  return `<button class="node" style="left:${xs[i]}%;top:${i*112+26}px;--c:${s.col}" data-w="${w.id}"><span class="nn px">${i+1}</span><span class="ic">${s.icon}</span><span class="nm">${esc(nm)}</span><span class="ns px">★${worldStars(w.id)}/12</span></button>`}).join('');
+  return `<button class="node" style="left:${xs[i]}%;top:${i*112+26}px;--c:${s.col}" data-w="${w.id}"><span class="nn px">${i+1}</span><span class="ic">${s.icon}</span><span class="nm">${esc(nm)}</span><span class="ns px">📖${byWorld(w.id).filter(learned).length}/${byWorld(w.id).length} ★${worldStars(w.id)}</span></button>`}).join('');
  const pts=xs.slice(0,D.worlds.length).map((x,i)=>`${x},${i*112+66}`).join(' ');
- const wk=weakIds().length;
+ const wk=weakIds().length,due=dueIds().length,N=D.concepts.length,nl=D.concepts.filter(c=>learned(c.id)).length,nm=D.concepts.filter(c=>learned(c.id)&&S.stats[c.id].b>=3).length,na=nextAction();
  app.innerHTML=hud()+`<div class="title">⚔️ אזרחות פיקסל ⚔️</div><div class="subt">${esc(D.meta.title)}</div>
+ <div class="box"><div class="prog"><span>📖 נלמדו</span><div class="bar"><i style="width:${nl/N*100}%"></i></div><b class="px">${nl}/${N}</b></div>
+ <div class="prog"><span>🏆 שולט</span><div class="bar"><i style="width:${nm/N*100}%;background:var(--yel)"></i></div><b class="px">${nm}/${N}</b></div>
+ <button class="btn grn" id="nx" style="margin-top:12px">▶ ${esc(na.txt)}</button>
+ <div class="row"><button class="btn ${due?'':'gray'}" id="due" ${due?'':'disabled'}>⏰ חזרה (${due})</button><button class="btn pink" id="weak">💔 חלשים (${wk})</button></div>
+ <button class="btn gray" id="plan">📅 איך ללמוד עד המבחן</button></div>
  <div class="map" style="height:${H}px"><div class="cloud" style="left:12%"></div><div class="cloud" style="left:62%;top:30px"></div>
  <svg class="path" viewBox="0 0 100 ${H}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="#c9a46a" stroke-width="14" vector-effect="non-scaling-stroke"/><polyline points="${pts}" fill="none" stroke="#1d1a2f" stroke-width="3" stroke-dasharray="6 8" vector-effect="non-scaling-stroke"/></svg>${nodes}</div>
- <button class="btn pink" id="weak">💔 המושגים החלשים שלי (${wk})</button>
  <button class="btn gray" id="how">📝 איך בונים תשובה במבחן?</button>
  <div class="small center" style="color:#d9d2ff;margin-top:8px">שיא רצף: ${S.best} 🔥</div>
  <button class="link" id="reset">איפוס התקדמות</button>`;
  bindHud();
  app.querySelectorAll('.node').forEach(b=>b.onclick=()=>{sfx('flip');showWorld(b.dataset.w)});
- $('#weak').onclick=showWeak;$('#how').onclick=showHow;
+ $('#weak').onclick=showWeak;$('#how').onclick=showHow;$('#plan').onclick=showPlan;$('#nx').onclick=()=>na.go();
+ if(due)$('#due').onclick=()=>startRun('practice',null,dueIds().slice(0,12),'⏰ חזרה מרווחת');
  $('#reset').onclick=e=>{const b=e.currentTarget;if(!b.dataset.c){b.dataset.c=1;b.textContent='בטוח? לחיצה נוספת תמחק הכול';b.style.color='#ff9aa5';return}S.xp=0;S.streak=0;S.best=0;S.stats={};S.prog={};save();showMap()};
  window.scrollTo(0,0)}
+
+/* the single "what should I do now" button */
+function nextAction(){const due=dueIds();
+ if(due.length>=3)return {txt:`חזרה מרווחת: ${due.length} מושגים מחכים`,go:()=>startRun('practice',null,due.slice(0,12),'⏰ חזרה מרווחת')};
+ for(const w of D.worlds){const ids=byWorld(w.id),nm=splitW(w.name)[1];
+  if(ids.some(id=>!learned(id)))return {txt:`ללמוד מושגים חדשים: ${nm}`,go:()=>startRun('learn',w.id)};
+  if(!((S.prog[w.id]||{}).id))return {txt:`לתרגל זיהוי: ${nm}`,go:()=>startRun('id',w.id)}}
+ if(weakIds().length)return {txt:`תרגול המושגים החלשים (${weakIds().length})`,go:()=>startRun('practice',null,weakIds())};
+ if(due.length)return {txt:`חזרה מרווחת: ${due.length} מושגים`,go:()=>startRun('practice',null,due,'⏰ חזרה מרווחת')};
+ for(const w of D.worlds){const p=S.prog[w.id]||{};if(!p.build)return {txt:`בונה תשובה: ${splitW(w.name)[1]}`,go:()=>startRun('build',w.id)};if((p.boss||0)<3)return {txt:`להביס את הבוס: ${splitW(w.name)[1]}`,go:()=>startRun('boss',w.id)}}
+ return {txt:'תרגול מעורב מכל העולמות',go:()=>startRun('practice',null,weakFirst(Object.keys(C)).slice(0,12),'🎲 תרגול מעורב')}}
+function showPlan(){
+ app.innerHTML=hud()+`<div class="box"><h3>📅 איך ללמוד מושגים בזמן קצר</h3>
+ <p>המשחק בנוי לפי מה שהמחקר על למידה מראה שעובד הכי טוב. הכפתור הירוק <b>"▶ המשך"</b> במפה תמיד בוחר את הצעד הבא, אז אפשר פשוט ללחוץ עליו.</p>
+ <h4>הערב</h4><ol>
+ <li><b>📖 לימוד בקבוצות של 3.</b> כל קבוצה לוקחת כ-5 דקות: הסבר עם דוגמה, השוואה למושגים דומים ומיד תרגול שליפה. ממשיכים עד שעונים נכון על כל מושג.</li>
+ <li><b>⏰ חזרה מרווחת.</b> כשהכפתור מראה מספר, עושים חזרה קצרה. מושג שעונים עליו נכון חוזר אחרי מרווח ארוך יותר (5 דק׳ ← 20 דק׳ ← שעה ← 6 שעות), ומושג שטועים בו חוזר מיד.</li>
+ <li><b>👾 זיהוי ו-🧱 בונה תשובה</b> אחרי שעולם שלם נלמד. זה בדיוק מה שהמבחן דורש.</li>
+ <li><b>לפני השינה:</b> סבב אחד של 💔 החלשים, ואז לישון. שינה אחרי למידה מפחיתה שכחה.</li></ol>
+ <h4>מחר בבוקר</h4><ol><li>⏰ חזרה מרווחת על כל מה שמחכה.</li><li>👑 בוס בכל עולם, כ-2 דקות לעולם.</li><li>💔 סבב אחרון על החלשים.</li></ol>
+ <h4>למה זה עובד</h4><ul>
+ <li><b>שליפה עדיפה על קריאה חוזרת.</b> לנסות להיזכר מחזק את הזיכרון יותר מלקרוא שוב.</li>
+ <li><b>עד שעונים נכון, ואז שוב אחרי הפסקה.</b> השיטה נקראת למידה חוזרת מרווחת (successive relearning).</li>
+ <li><b>להשוות מושגים דומים זה לצד זה</b> מלמד מה מבדיל ביניהם, וזו בדיוק המלכודת במבחן.</li>
+ <li><b>כמה דוגמאות לכל מושג</b> מלמדות לזהות אותו גם בקטע חדש.</li>
+ <li><b>מעט בכל פעם.</b> 3 מושגים בקבוצה ולא 20 בבת אחת.</li></ul></div>
+ <button class="btn grn" id="nx">▶ ${esc(nextAction().txt)}</button><button class="btn gray" id="back">◀ חזרה למפה</button>`;
+ bindHud();$('#back').onclick=showMap;$('#nx').onclick=()=>nextAction().go();window.scrollTo(0,0)}
 
 function showHow(){const a=D.meta.answer_structure;
  app.innerHTML=hud()+`<div class="box"><h3>📝 מבנה תשובה בארבעה צעדים</h3>${a.map((s,i)=>{const [l,d]=s.split(' – ');return `<p><span class="tag">${i+1}. ${esc(l)}</span> ${esc(d||'')}</p>`}).join('')}
@@ -249,9 +323,9 @@ function showHow(){const a=D.meta.answer_structure;
 function showWorld(wid){clearTimer();R=null;const w=D.worlds.find(x=>x.id===wid),s=WS[wid],p=S.prog[wid]||{};
  const ids=byWorld(wid);
  app.innerHTML=hud()+`<div class="box center" style="background:${s.col};color:#fff"><div style="font-size:34px">${s.icon}</div><h2 style="text-shadow:2px 2px 0 #0006">${esc(w.name)}</h2><div>${monster(s.mon)}</div></div>
- ${STAGES.map((st,i)=>`<button class="btn stage ${['','pink','blue','red'][i]}" data-k="${st.k}"><span class="si">${st.ic}</span><span>${i+1}. ${st.n}<br><span class="sd">${st.d}</span></span><span class="stars">${stars(p[st.k]||0)}</span></button>`).join('')}
- <div class="box"><b>${ids.length} מושגים בעולם:</b><div class="chips" style="margin-top:8px">${ids.map(id=>{const st=S.stats[id];const cl=!st?'':st.b<=1&&st.w>0?'w':st.b>=3?'g':'';return `<span class="chip ${cl}">${esc(C[id].name)}</span>`}).join('')}</div>
- <div class="small" style="margin-top:8px">ורוד = חלש · ירוק = שולט</div></div>
+ ${STAGES.map((st,i)=>`<button class="btn stage ${['grn','','pink','blue','red'][i]}" data-k="${st.k}"><span class="si">${st.ic}</span><span>${i+1}. ${st.n}<br><span class="sd">${st.k==='learn'?`נלמדו ${ids.filter(learned).length}/${ids.length} · `:''}${st.d}</span></span><span class="stars">${stars(st.k==='learn'?learnStars(wid):(p[st.k]||0))}</span></button>`).join('')}
+ <div class="box"><b>${ids.length} מושגים בעולם:</b><div class="chips" style="margin-top:8px">${ids.map(id=>{const st=S.stats[id];const cl=!st||!st.L?'n':st.b<=1&&st.w>0?'w':st.b>=3?'g':'';return `<span class="chip ${cl}">${esc(C[id].name)}</span>`}).join('')}</div>
+ <div class="small" style="margin-top:8px">אפור = עוד לא נלמד · ורוד = חלש · ירוק = שולט</div></div>
  <button class="btn gray" id="back">◀ חזרה למפה</button>`;
  bindHud();
  app.querySelectorAll('.stage').forEach(b=>b.onclick=()=>startRun(b.dataset.k,wid));
@@ -266,21 +340,53 @@ function showWeak(){clearTimer();R=null;const ids=weakIds();
  bindHud();if(ids.length)$('#prac').onclick=()=>startRun('practice',null,ids);$('#back').onclick=showMap;window.scrollTo(0,0)}
 
 /* ---------- runs ---------- */
-function startRun(kind,wid,ids){clearTimer();
- const pool=ids||byWorld(wid);let q=[];
+function startRun(kind,wid,ids,label){clearTimer();
+ const pool=ids||byWorld(wid);let q=[],batch=null;
+ if(kind==='learn'){batch=ids||nextBatch(wid);if(!batch.length)batch=weakFirst(byWorld(wid)).slice(0,3);
+  const known=byWorld(wid).filter(x=>learned(x)&&!batch.includes(x));const lp=batch.concat(known);
+  const near=(a,b)=>(C[a].confusables||[]).includes(b)||(C[b].confusables||[]).includes(a);
+  q=batch.map(id=>({t:'intro',id}));
+  const fam=batch.filter(id=>batch.some(o=>o!==id&&near(id,o)));if(fam.length>=2)q.push({t:'compare',ids:fam});
+  q.push({t:'go'});
+  q=q.concat(shuffle(batch).map(id=>({t:'name',id,pool:lp})));
+  q=q.concat(shuffle(batch).map(id=>({t:'id',id,sc:C[id].scenarios[C[id].scenarios.length>1?1:0],pool:lp})));
+  q=q.concat(weakFirst(known).slice(0,3).map(id=>({t:'id',id,sc:pick(C[id].scenarios),pool:lp})));
+  q=q.concat(shuffle(batch).map(id=>({t:pick(['cloze','cloze','def']),id,sc:C[id].scenarios[0],pool:lp})))}
  if(kind==='flash')q=weakFirst(pool).map(id=>({t:'flash',id}));
  else if(kind==='id'){const ord=weakFirst(pool);for(let r=0;q.length<10;r++){let any=false;for(const id of ord){const sc=C[id].scenarios[r];if(sc&&q.length<10){q.push({t:'id',id,sc});any=true}}if(!any)break}}
  else if(kind==='build')q=weakFirst(pool).slice(0,5).map(id=>({t:'build',id,sc:pick(C[id].scenarios)}));
- else if(kind==='boss'){const ord=weakFirst(pool);for(let i=0;i<10;i++){const id=ord[i%ord.length];q.push({t:pick(['id','id','def','name','quote']),id,sc:pick(C[id].scenarios)})}q=shuffle(q)}
- else if(kind==='practice'){q=shuffle(pool).map(id=>({t:'id',id,sc:pick(C[id].scenarios)})).concat(shuffle(pool).map(id=>({t:pick(['def','name','quote']),id,sc:pick(C[id].scenarios)})))}
- R={kind,wid,q,i:0,hearts:(kind==='flash'||kind==='practice')?Infinity:3,xp0:S.xp,missed:new Set(),ok:0,firstTry:new Set(),seen:new Set()};
+ else if(kind==='boss'){const ord=weakFirst(pool);for(let i=0;i<10;i++){const id=ord[i%ord.length];q.push({t:pick(['id','id','def','name','quote','cloze']),id,sc:pick(C[id].scenarios)})}q=shuffle(q)}
+ else if(kind==='practice'){q=shuffle(pool).map(id=>({t:'id',id,sc:pick(C[id].scenarios)})).concat(shuffle(pool).map(id=>({t:pick(['def','name','quote','cloze']),id,sc:pick(C[id].scenarios)})))}
+ R={kind,wid,q,i:0,batch,label,ids,hearts:(kind==='flash'||kind==='practice'||kind==='learn')?Infinity:3,xp0:S.xp,missed:new Set(),ok:0,firstTry:new Set(),seen:new Set()};
  R.hp=R.max=(kind==='id'||kind==='boss')?q.length:0;
  next()}
 
 function next(){clearTimer();if(R.hearts<=0)return gameOver();if(R.i>=R.q.length)return win();const q=R.q[R.i];
- if(q.t==='flash')renderFlash(q);else if(q.t==='build')renderBuild(q);else renderChoice(q);window.scrollTo(0,0)}
+ if(q.t==='flash')renderFlash(q);else if(q.t==='build')renderBuild(q);else if(q.t==='intro')renderIntro(q);else if(q.t==='compare')renderCompare(q);else if(q.t==='go')renderGo();else renderChoice(q);window.scrollTo(0,0)}
 
-function runTitle(){if(R.kind==='practice')return '🎯 תרגול מושגים חלשים';const st=STAGES.find(s=>s.k===R.kind);return `${st.ic} ${st.n} · ${esc(splitW(D.worlds.find(w=>w.id===R.wid).name)[1])}`}
+/* ---- learning: teach before testing ---- */
+function renderIntro(q){const c=C[q.id],sc=c.scenarios[0],k=R.batch.indexOf(q.id);
+ const conf=(c.confusables||[]).map(x=>C[x]).filter(Boolean).sort((a,b)=>(b.world===c.world)-(a.world===c.world))[0];
+ app.innerHTML=topBar()+`<div class="box learn"><span class="tag">📖 מושג חדש ${k+1} מתוך ${R.batch.length}</span>
+ <div class="big">${esc(c.name)}</div><div class="small">עמ׳ ${c.page} בחוברת</div>
+ <h4>📘 ההגדרה, חלק אחרי חלק</h4><ol class="pieces">${splitSents(c.definition).map(x=>`<li>${esc(x)}</li>`).join('')}</ol>
+ ${c.points.length?`<h4>🔑 נקודות מפתח</h4><ul>${c.points.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}
+ ${c.mnemonic?`<div class="mn">🧠 קוד לזכירה: ${esc(c.mnemonic)}</div>`:''}</div>
+ <div class="box"><span class="tag">🎬 דוגמה</span><div class="scene">${hl(sc.text,sc.quote)}</div>
+ <details class="why2"><summary>💭 לפני שפותחים: למה זו דוגמה ל"${esc(c.name)}"? נסה/י להסביר לעצמך</summary><p>במשפט "${esc(sc.quote)}" רואים את ${esc(c.name)}: ${esc(keyOf(q.id))}.</p></details></div>
+ ${conf?`<div class="box warn">⚠️ <b>לא להתבלבל עם "${esc(conf.name)}"</b>: ${esc(firstSent(conf.definition))}</div>`:''}
+ <button class="btn grn" id="go">הבנתי – הבא ◀</button>`;
+ bindTop();$('#go').onclick=()=>{sfx('flip');R.i++;next()}}
+function renderCompare(q){
+ app.innerHTML=topBar()+`<div class="box"><span class="tag">🔍 השוואה</span><h3>מושגים דומים: מה ההבדל?</h3><p class="small">המושגים האלה דומים ונוטים להתבלבל ביניהם. שים/י לב מה מבדיל כל אחד מהאחרים.</p></div>
+ ${q.ids.map((id,i)=>{const c=C[id],sc=c.scenarios[0];return `<div class="box cmp" style="--c:${['#ff6fa5','#3a86ff','#2ec27e','#ff9f1c'][i%4]}"><div class="cmph">${esc(c.name)}</div><p><b>בקצרה:</b> ${esc(keyOf(id))}</p><p><b>דוגמה:</b> "${esc(sc.quote)}"</p></div>`}).join('')}
+ <button class="btn grn" id="go">הבנתי את ההבדל ◀</button>`;
+ bindTop();$('#go').onclick=()=>{sfx('flip');R.i++;next()}}
+function renderGo(){
+ app.innerHTML=topBar()+`<div class="box center"><div style="font-size:40px">🧠</div><h3>עכשיו מנסים להיזכר</h3><p>לשלוף מהזיכרון מקבע אותו הרבה יותר מקריאה חוזרת. מותר לטעות: מושג שטעית בו יחזור עוד מעט, עד שתענה/י עליו נכון.</p></div><button class="btn grn" id="go">יאללה ◀</button>`;
+ bindTop();$('#go').onclick=()=>{R.i++;next()}}
+
+function runTitle(){if(R.label)return R.label;if(R.kind==='practice')return '🎯 תרגול מושגים חלשים';const st=STAGES.find(s=>s.k===R.kind);return `${st.ic} ${st.n} · ${esc(splitW(D.worlds.find(w=>w.id===R.wid).name)[1])}`}
 function topBar(){const p=Math.round(R.i/R.q.length*100);
  const h=R.hearts===Infinity?'<span class="px" style="font-size:12px">∞</span>'+heart(true):[0,1,2].map(k=>heart(k<R.hearts)).join('');
  return `<div class="top"><button class="x" id="quit" aria-label="יציאה">✕</button><div class="bar"><i style="width:${p}%"></i></div><div class="hearts" id="hearts">${h}</div></div><div class="sub"><span>${runTitle()}</span><span class="px">🔥${S.streak}</span></div>`}
@@ -298,11 +404,13 @@ function hitMonster(){if(!R.max)return;R.hp=Math.max(0,R.hp-1);const a=document.
 
 /* ---- choice questions ---- */
 function buildChoice(q){const c=C[q.id];
- if(q.t==='id'){const ids=shuffle([q.id,...distractors(q.id,3)]);
+ const dis=n=>q.pool?distractorsPool(q.id,n,q.pool):distractors(q.id,n);
+ if(q.t==='cloze'){const z=buildCloze(q.id);if(z)return z;q.t='def'}
+ if(q.t==='id'){const ids=shuffle([q.id,...dis(3)]);
   return {prompt:`<span class="tag">🎬 איזה מושג מתאים לסיטואציה?</span><div class="scene">${esc(q.sc.text)}</div>`,opts:ids.map(x=>({html:esc(C[x].name),ok:x===q.id,id:x}))}}
- if(q.t==='name'){const ids=shuffle([q.id,...distractors(q.id,3)]);
+ if(q.t==='name'){const ids=shuffle([q.id,...dis(3)]);
   return {prompt:`<span class="tag">📖 איזה מושג מוגדר כך?</span><div class="prompt-def">${maskName(c)}</div>`,opts:ids.map(x=>({html:esc(C[x].name),ok:x===q.id,id:x}))}}
- if(q.t==='def'){const ids=shuffle([q.id,...distractors(q.id,3)]);const sn=snippets(ids);
+ if(q.t==='def'){const ids=shuffle([q.id,...dis(3)]);const sn=snippets(ids);
   return {prompt:`<span class="tag">🧠 מה ההגדרה?</span><div class="scene">${esc(c.name)}</div>`,opts:ids.map((x,k)=>({html:esc(sn[k]),ok:x===q.id,id:x}))}}
  if(q.t==='quote')return {prompt:`<span class="tag">💬 איזה משפט מדגים את: ${esc(c.name)}?</span><div class="scene">${esc(q.sc.text)}</div>`,opts:quoteOpts(q.sc,q.id)};
 }
@@ -315,7 +423,7 @@ function renderChoice(q){const b=q.b||(q.b=buildChoice(q));const boss=R.kind==='
   if(o&&!ok){btns[k].classList.add('bad');if(o.id&&C[o.id])extra=`<div class="why">מה שבחרת – <b>${esc(C[o.id].name)}</b>: ${esc(firstSent(C[o.id].definition))}</div>`;else if(o.why)extra=`<div class="why">${esc(o.why)}</div>`}
   if(k<0)extra='<div class="why">⏰ נגמר הזמן!</div>';
   let x=0;if(ok){x=onRight(q.id);hitMonster()}else{onWrong(q.id);
-   const copy={t:q.t,id:q.id,sc:q.sc};if(R.kind==='boss')R.q.push(copy);else R.q.splice(Math.min(R.i+3,R.q.length),0,copy)}
+   const copy={t:q.t,id:q.id,sc:q.sc};copy.pool=q.pool;if(R.kind==='boss')R.q.push(copy);else R.q.splice(Math.min(R.i+(R.kind==='learn'?2:3),R.q.length),0,copy)}
   refreshTop();
   showFb(ok,q.id,extra,x)};
  btns.forEach((x,k)=>x.onclick=()=>answer(k));
@@ -375,26 +483,30 @@ function renderBuild(q){const c=C[q.id];q.step=q.step||0;const L=LABELS();
 function win(){clearTimer();const k=R.kind;let st=3,bonus=0;
  if(k==='flash'){const n=new Set(R.q.map(q=>q.id)).size;const f=R.firstTry.size/n;st=f>=.9?3:f>=.6?2:1;bonus=20}
  else if(k==='practice'){st=0;bonus=15}
+ else if(k==='learn'){bonus=15;for(const id of R.batch){const s=S.stats[id]||(S.stats[id]={r:0,w:0,b:1,due:0});s.L=1;if(!s.due||s.due>Date.now()+INT[1]*60000)s.due=Date.now()+INT[1]*60000}st=learnStars(R.wid);save()}
  else{st=Math.max(1,R.hearts);bonus=k==='boss'?50:20}
  gain(bonus);
- if(R.wid&&k!=='practice'){const p=S.prog[R.wid]||(S.prog[R.wid]={});p[k]=Math.max(p[k]||0,st);save()}
+ if(R.wid&&k!=='practice'&&k!=='learn'){const p=S.prog[R.wid]||(S.prog[R.wid]={});p[k]=Math.max(p[k]||0,st);save()}
  sfx('win');
  const missed=[...R.missed];const still=k==='practice'?weakIds().length:0;
- app.innerHTML=hud()+`<div class="box center"><h2>${k==='boss'?'👑 הבוס הובס!':k==='practice'?'🎯 סיימת תרגול!':'🎉 שלב הושלם!'}</h2>
+ app.innerHTML=hud()+`<div class="box center"><h2>${k==='boss'?'👑 הבוס הובס!':k==='practice'?'🎯 סיימת תרגול!':k==='learn'?(R.batch.length===1?'🎓 למדת מושג חדש!':'🎓 למדת '+R.batch.length+' מושגים!'):'🎉 שלב הושלם!'}</h2>
+ ${k==='learn'?`<div class="chips" style="justify-content:center;margin:8px 0">${R.batch.map(id=>`<span class="chip g">${esc(C[id].name)}</span>`).join('')}</div><p class="small">בעולם הזה למדת ${byWorld(R.wid).filter(learned).length} מתוך ${byWorld(R.wid).length}. המושגים יחזרו בחזרה המרווחת (⏰) בעוד כמה דקות.</p>`:''}
  ${st?`<div style="margin:10px 0">${stars(st).replace(/width="21" height="21"/g,'width="36" height="36"')}</div>`:''}
  <div class="px" style="font-size:12px;margin:10px 0">+${S.xp-R.xp0} XP</div>
  ${k==='practice'?`<p>נשארו ${still} מושגים חלשים.</p>`:''}
  ${missed.length?`<p><b>כדאי לחזור על:</b></p><div class="chips" style="justify-content:center">${missed.map(id=>`<span class="chip w">${esc(C[id].name)}</span>`).join('')}</div>`:'<p>בלי אף טעות! 💪</p>'}</div>
- <button class="btn grn" id="again">🔁 שוב</button>${k==='practice'?'<button class="btn pink" id="wk">💔 לרשימת החלשים</button>':'<button class="btn" id="world">◀ חזרה לעולם</button>'}<button class="btn gray" id="map">🗺️ מפה</button>`;
+ ${k==='learn'&&nextBatch(R.wid).length?'<button class="btn grn" id="nb">📖 לקבוצה הבאה</button>':''}${k==='learn'&&!nextBatch(R.wid).length?'<button class="btn grn" id="nid">👾 סיימת ללמוד את העולם! לשלב הזיהוי</button>':''}<button class="btn ${k==='learn'?'gray':'grn'}" id="again">🔁 שוב</button><button class="btn blue" id="nx">⭐ המשך ללמוד (הצעד הבא)</button>${k==='practice'?'<button class="btn pink" id="wk">💔 לרשימת החלשים</button>':'<button class="btn" id="world">◀ חזרה לעולם</button>'}<button class="btn gray" id="map">🗺️ מפה</button>`;
  bindHud();endBinds()}
 function gameOver(){clearTimer();sfx('lose');const missed=[...R.missed];
  app.innerHTML=hud()+`<div class="box center"><h2>💔 נגמרו הלבבות</h2><div>${monster((WS[R.wid]||{}).mon||'#aaa',R.kind==='boss')}</div><p>לא נורא – המושגים שטעית בהם יחזרו מוקדם יותר בפעם הבאה.</p>
  <div class="chips" style="justify-content:center">${missed.map(id=>`<span class="chip w">${esc(C[id].name)}</span>`).join('')}</div></div>
  ${missed.map(id=>`<details class="box"><summary>${esc(C[id].name)}</summary>${defHtml(C[id])}</details>`).join('')}
- <button class="btn grn" id="again">🔁 נסה/י שוב</button><button class="btn" id="world">◀ חזרה לעולם</button><button class="btn gray" id="map">🗺️ מפה</button>`;
+ <button class="btn grn" id="again">🔁 נסה/י שוב</button><button class="btn blue" id="nx">⭐ המשך ללמוד (הצעד הבא)</button><button class="btn" id="world">◀ חזרה לעולם</button><button class="btn gray" id="map">🗺️ מפה</button>`;
  bindHud();endBinds()}
-function endBinds(){const k=R.kind,w=R.wid;
- $('#again').onclick=()=>k==='practice'?(weakIds().length?startRun('practice',null,weakIds()):showWeak()):startRun(k,w);
+function endBinds(){const k=R.kind,w=R.wid,ids=R.ids,label=R.label,batch=R.batch;
+ $('#again').onclick=()=>k==='practice'?(label?startRun('practice',null,ids,label):weakIds().length?startRun('practice',null,weakIds()):showWeak()):k==='learn'?startRun('learn',w,batch):startRun(k,w);
+ const nb=$('#nb');if(nb)nb.onclick=()=>startRun('learn',w);const ni=$('#nid');if(ni)ni.onclick=()=>startRun('id',w);
+ const nx=$('#nx');if(nx)nx.onclick=()=>nextAction().go();
  const wb=$('#world');if(wb)wb.onclick=()=>showWorld(w);const wk=$('#wk');if(wk)wk.onclick=showWeak;$('#map').onclick=showMap;window.scrollTo(0,0)}
 </script>
 </body>

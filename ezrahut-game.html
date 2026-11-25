@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2b2250">
+<title>אזרחות פיקסל</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rubik:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--ink:#1d1a2f;--cream:#fff8e7;--sky:#6ecbff;--grass:#7bd85a;--yel:#ffd23f;--pink:#ff6fa5;--pur:#8f5cff;--org:#ff9f1c;--red:#ff4d5e;--grn:#2ec27e;--blue:#3a86ff;--bg:#2b2250}
+*{box-sizing:border-box}
+html,body{margin:0;direction:rtl;background:var(--bg);color:var(--ink);font-family:'Rubik',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+body{min-height:100vh;background-color:var(--bg);background-image:radial-gradient(#ffffff22 1px,transparent 1px),radial-gradient(#ffffff14 1px,transparent 1px);background-size:24px 24px,40px 40px;background-position:0 0,12px 20px}
+#app{max-width:480px;margin:0 auto;padding-block:12px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));min-height:100vh}
+.px{font-family:'Press Start 2P','Rubik',monospace;letter-spacing:0}
+svg{image-rendering:pixelated;display:inline-block;vertical-align:middle}
+h1,h2,h3{margin:.2em 0}
+.box{background:var(--cream);box-shadow:0 0 0 4px var(--ink),6px 6px 0 4px #0006;margin:16px 4px;padding:12px 14px;line-height:1.55}
+.center{text-align:center}
+.btn{font:inherit;font-weight:800;font-size:16px;border:0;background:var(--yel);color:var(--ink);padding:12px 14px;margin:8px 0;width:100%;cursor:pointer;box-shadow:0 0 0 3px var(--ink),inset -4px -4px 0 #0003,inset 4px 4px 0 #fff8;text-align:center}
+.btn:active{transform:translate(2px,2px)}
+.btn.pink{background:var(--pink)}.btn.grn{background:var(--grn);color:#fff}.btn.red{background:var(--red);color:#fff}.btn.blue{background:var(--blue);color:#fff}.btn.gray{background:#c9c3dd}
+.btn:disabled{opacity:.5}
+.row{display:flex;gap:10px}.row>*{flex:1}
+/* HUD */
+.hud{display:flex;align-items:center;gap:8px;color:#fff;font-size:11px;margin:4px 0 8px}
+.hud .lv{background:var(--pur);padding:6px 6px 5px;box-shadow:0 0 0 2px var(--ink)}
+.xpbar{flex:1;height:14px;background:#0005;box-shadow:0 0 0 2px var(--ink);position:relative}
+.xpbar i{display:block;height:100%;background:var(--yel);box-shadow:inset 0 -3px 0 #0003}
+.hud .ttl{font-size:12px;font-family:'Rubik';font-weight:600;opacity:.9}
+.icb{background:none;border:0;font-size:18px;cursor:pointer;padding:2px}
+/* map */
+.title{color:#fff;text-align:center;margin:8px 0 2px;font-size:28px;font-weight:800;text-shadow:3px 3px 0 var(--pink),5px 5px 0 var(--ink)}
+.subt{color:#d9d2ff;text-align:center;font-size:13px;margin-bottom:8px}
+.map{position:relative;margin:12px 0;background:linear-gradient(#6ecbff 0 18%,#7bd85a 18%);box-shadow:0 0 0 4px var(--ink),6px 6px 0 4px #0006;overflow:hidden}
+.map:before{content:"";position:absolute;inset:0;background-image:linear-gradient(90deg,#0000000d 50%,transparent 50%),linear-gradient(#0000000d 50%,transparent 50%);background-size:16px 16px}
+.map .cloud{position:absolute;top:14px;width:48px;height:12px;background:#fff;box-shadow:12px -8px 0 #fff,24px 0 0 #fff}
+.map svg.path{position:absolute;inset:0;width:100%;height:100%}
+.node{position:absolute;transform:translateX(-50%);width:150px;border:0;background:var(--c);color:#fff;font:inherit;padding:8px 6px 6px;cursor:pointer;box-shadow:0 0 0 3px var(--ink),inset -4px -4px 0 #0003,inset 4px 4px 0 #fff5;text-align:center;line-height:1.25}
+.node:active{transform:translateX(-50%) translate(2px,2px)}
+.node .ic{font-size:24px;display:block}
+.node .nn{position:absolute;top:-10px;right:-10px;background:var(--yel);color:var(--ink);font-size:10px;padding:4px 5px;box-shadow:0 0 0 2px var(--ink)}
+.node .nm{display:block;font-weight:800;font-size:13px;text-shadow:1px 1px 0 #0006}
+.node .ns{display:block;font-size:9px;margin-top:4px;color:var(--yel);text-shadow:1px 1px 0 #0008}
+/* world */
+.stage{display:flex;align-items:center;gap:12px;text-align:right}
+.stage .si{font-size:30px}
+.stage .sd{font-weight:400;font-size:13px;opacity:.8}
+.stage .stars{margin-inline-start:auto;white-space:nowrap}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;padding:3px 7px;background:#fff;box-shadow:0 0 0 2px var(--ink)}
+.chip.w{background:#ffd0d5}.chip.g{background:#c8f5d9}
+/* run */
+.top{display:flex;align-items:center;gap:10px;margin-top:4px}
+.x{background:var(--cream);border:0;font-weight:800;width:34px;height:34px;box-shadow:0 0 0 3px var(--ink);cursor:pointer;font-size:16px}
+.bar{flex:1;height:16px;background:#0005;box-shadow:0 0 0 3px var(--ink)}
+.bar i{display:block;height:100%;background:var(--grn);box-shadow:inset 0 -4px 0 #0003;transition:width .3s}
+.hearts{display:flex;gap:3px;color:#fff}
+.sub{display:flex;justify-content:space-between;color:#fff;font-size:12px;margin:10px 2px 0;align-items:center}
+.sub .px{font-size:10px;color:var(--yel)}
+.arena{position:relative;text-align:center;margin:14px 0 4px;min-height:110px}
+.arena .mon{animation:bob 1.2s steps(2) infinite}
+.arena.hit .mon{animation:hit .4s steps(4)}
+.arena.dead .mon{animation:die .6s steps(6) forwards}
+.hp{width:60%;margin:6px auto 0;height:12px;background:#0005;box-shadow:0 0 0 3px var(--ink)}
+.hp i{display:block;height:100%;background:var(--red);transition:width .3s}
+.dmg{position:absolute;left:50%;top:20px;color:var(--yel);font-size:16px;text-shadow:2px 2px 0 var(--ink);animation:up .8s forwards;pointer-events:none}
+@keyframes bob{50%{transform:translateY(-4px)}}
+@keyframes hit{0%,50%{filter:brightness(3)}25%,75%{transform:translateX(-6px)}100%{transform:none}}
+@keyframes die{to{transform:scale(1.4) translateY(10px);opacity:0}}
+@keyframes up{to{transform:translateY(-40px);opacity:0}}
+@keyframes shake{25%{transform:translateX(6px)}75%{transform:translateX(-6px)}}
+.shake{animation:shake .25s 2}
+.tag{display:inline-block;background:var(--ink);color:var(--yel);font-size:12px;padding:3px 8px;margin-bottom:8px}
+.scene{font-size:17px;font-weight:600}
+.prompt-def{font-size:15px}
+.opts{display:flex;flex-direction:column;gap:12px;margin:14px 4px}
+.opt{font:inherit;font-size:15px;text-align:right;background:#fff;color:var(--ink);border:0;padding:11px 12px;cursor:pointer;box-shadow:0 0 0 3px var(--ink),inset -3px -3px 0 #0002;line-height:1.45}
+.opt:active{transform:translate(2px,2px)}
+.opt.ok{background:#8ff0b5}.opt.bad{background:#ff9aa5;text-decoration:line-through}
+.opt:disabled{cursor:default;color:var(--ink)}
+.timer{height:8px;background:#0005;margin:8px 4px 0;box-shadow:0 0 0 2px var(--ink)}
+.timer i{display:block;height:100%;background:var(--yel)}
+.timer.low i{background:var(--red)}
+.fb{margin:16px 4px;padding:12px 14px;box-shadow:0 0 0 4px var(--ink);line-height:1.55}
+.fb.good{background:#d4f8e2}.fb.bad{background:#ffe0e3}
+.fbh{font-weight:800;font-size:17px;margin-bottom:6px}
+.fbh .px{font-size:10px;color:var(--grn)}
+.def .dn{font-weight:800}
+.def p{margin:6px 0}
+.def ul{margin:4px 0;padding-inline-start:20px}
+.pg{font-size:11px;opacity:.6;font-weight:400}
+.mn{background:var(--yel);padding:4px 8px;margin-top:6px;font-weight:600;box-shadow:0 0 0 2px var(--ink)}
+.why{font-size:14px;background:#fff;padding:6px 8px;margin:6px 0;box-shadow:0 0 0 2px #0002}
+details summary{cursor:pointer;font-weight:600}
+/* flash card */
+.card{min-height:300px;background:#fff;margin:18px 4px;padding:18px 16px;box-shadow:0 0 0 4px var(--ink),6px 6px 0 4px #0006;cursor:pointer;display:flex;flex-direction:column;justify-content:center;transition:transform .15s steps(3)}
+.card.flip{transform:scaleX(0)}
+.card .big{font-size:26px;font-weight:800;text-align:center;line-height:1.3}
+.card .hint{text-align:center;opacity:.55;font-size:13px;margin-top:18px}
+.card.back{cursor:default;justify-content:flex-start;background:var(--cream)}
+/* builder */
+.frame{display:grid;gap:8px;margin:14px 4px}
+.slot{display:flex;gap:8px;align-items:flex-start;background:#ffffff22;color:#fff;padding:7px 8px;box-shadow:0 0 0 2px #ffffff55;font-size:14px;line-height:1.4}
+.slot b{flex:0 0 auto;background:#fff3;padding:1px 6px}
+.slot.on{box-shadow:0 0 0 3px var(--yel);background:#ffd23f33}
+.slot.done{background:var(--cream);color:var(--ink);box-shadow:0 0 0 3px var(--ink)}
+.slot.done b{background:var(--grn);color:#fff}
+.slot .st{opacity:.7}
+.blocks .opt{position:relative}
+.model .lab{display:inline-block;background:var(--pur);color:#fff;font-weight:800;padding:0 6px;margin-inline-end:6px}
+.model p{margin:6px 0}
+/* misc */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--yel);padding:10px 14px;box-shadow:0 0 0 3px var(--yel);font-weight:800;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9;max-width:90vw;text-align:center}
+#toast.show{opacity:1}
+.weak .w{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.weak .cnt{font-size:9px;white-space:nowrap}
+.cnt .r{color:var(--grn)}.cnt .e{color:var(--red)}
+.small{font-size:13px;opacity:.8}
+.chip.n{background:#ddd8ea;color:#5b5470}
+.learn .big{font-size:24px;font-weight:800;margin:4px 0 2px;line-height:1.3}
+.learn h4,.box h4{margin:12px 0 4px}
+.pieces{margin:4px 0;padding-inline-start:22px}.pieces li{margin:4px 0}
+mark{background:var(--yel);padding:0 2px}
+.why2{margin-top:10px;background:#fff;padding:6px 8px;box-shadow:0 0 0 2px #0002}
+.warn{background:#ffe9c7}
+.cmp{border-inline-start:10px solid var(--c)}.cmph{font-weight:800;font-size:18px;color:var(--ink);margin-bottom:4px}
+.cmp p{margin:4px 0}
+.blank{color:var(--pur)}
+.prog{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:14px}.prog span{width:62px}.prog .bar{height:12px;box-shadow:0 0 0 2px var(--ink)}.prog b{font-size:10px}
+.btn .sd{color:inherit}
+.link{background:none;border:0;color:#d9d2ff;text-decoration:underline;font:inherit;font-size:13px;cursor:pointer;display:block;margin:14px auto 0}
+code{background:var(--ink);color:var(--yel);padding:2px 6px;direction:ltr;display:inline-block}
+</style>
+</head>
+<body>
+<div id="app"><div class="box center">טוען…</div></div>
+<div id="toast"></div>
+<script>window.CONCEPTS={"meta": {"title": "מושגים באזרחות – פרק ב׳: מהי דמוקרטיה? ערכים, עקרונות ומאפיינים של משטר דמוקרטי", "source": "חוברת סיכום, עמודים 11–21", "note": "השדות name, definition, points, mnemonic הועתקו מהחוברת. השדות scenarios ו-confusables נכתבו בשביל המשחק ואינם מהחוברת.", "answer_structure": ["הצג – שם המושג", "הסבר – ההגדרה", "צטט – משפט מהקטע", "קשר – איך הציטוט מדגים את המושג"]}, "worlds": [{"id": "elections", "name": "עולם 1: שלטון העם ובחירות"}, {"id": "culture", "name": "עולם 2: תרבות פוליטית"}, {"id": "limits", "name": "עולם 3: הגבלת השלטון ושלטון החוק"}, {"id": "obedience", "name": "עולם 4: ציות, עבריינות ופקודות"}, {"id": "rights", "name": "עולם 5: זכויות וחובות"}, {"id": "defense", "name": "עולם 6: דמוקרטיה מתגוננת וביטחון"}], "concepts": [{"id": "popular_sovereignty", "world": "elections", "page": 11, "name": "עיקרון שלטון העם", "definition": "כלל האזרחים הם הריבון (בעל הסמכות) על ידי בחירת נציגים בבחירות דמוקרטיות שפועלים בשם האזרחים ולמענם. הנציגים נבחרים לזמן קצוב (שנקבע בחוק).", "points": [], "scenarios": [{"text": "לאחר הבחירות אמר חבר כנסת חדש: \"אני כאן בזכות הבוחרים, ואני מחויב לפעול בשמם ולמענם עד הבחירות הבאות.\"", "quote": "אני מחויב לפעול בשמם ולמענם עד הבחירות הבאות"}], "confusables": ["democratic_elections", "periodicity", "majority_rule"]}, {"id": "democratic_elections", "world": "elections", "page": 11, "name": "בחירות דמוקרטיות", "definition": "הליך באמצעותו מחליפים/בוחרים את השלטון במדינה דמוקרטית. לבחירות דמוקרטיות חמישה תנאים הכרחיים: כלליות, חשאיות, מחזוריות, שוויוניות, התמודדות חופשית.", "mnemonic": "כח משה – כלליות, חשאיות, מחזוריות, שוויוניות, התמודדות חופשית", "points": [], "scenarios": [{"text": "ביום הבחירות הגיעו מיליוני אזרחים לקלפיות כדי לבחור מי ירכיב את הממשלה הבאה.", "quote": "לבחור מי ירכיב את הממשלה הבאה"}], "confusables": ["popular_sovereignty", "universality", "free_competition"]}, {"id": "universality", "world": "elections", "page": 11, "name": "כלליות (בחירות)", "definition": "כל אזרחי המדינה זכאים לבחור ולהיבחר למוסדות הנבחרים במדינה במגבלות הכתובות בחוק (כמו גיל מינימלי ובמדינות מסוימות עבריינות על החוק).", "points": [], "scenarios": [{"text": "ועדת הבחירות הודיעה שכל אזרח מגיל 18 רשאי להצביע, בלי קשר לדתו, למינו או לאזור מגוריו.", "quote": "כל אזרח מגיל 18 רשאי להצביע"}, {"text": "במדינה מסוימת הוחלט שרק בעלי תואר אקדמי יוכלו להצביע. ארגוני זכויות טענו שהחלטה זו פוגעת בבחירות הדמוקרטיות.", "quote": "רק בעלי תואר אקדמי יוכלו להצביע"}], "confusables": ["equality_vote", "right_to_elect", "secrecy"]}, {"id": "secrecy", "world": "elections", "page": 11, "name": "חשאיות (בחירות)", "definition": "איש מלבד הבוחר לא יודע במי בחר. כך מובטח שהבוחר לא יושפע מלחצים של גורמים שונים.", "points": [], "scenarios": [{"text": "מנהל מפעל ביקש מעובדיו לצלם את פתק ההצבעה ולהראות לו. העובדים סירבו ואמרו שאיש לא אמור לדעת במי בחרו.", "quote": "איש לא אמור לדעת במי בחרו"}, {"text": "בקלפי הוצב פרגוד כדי שאיש לא יראה איזה פתק הבוחר מכניס למעטפה.", "quote": "כדי שאיש לא יראה איזה פתק הבוחר מכניס"}], "confusables": ["universality", "free_competition", "privacy"]}, {"id": "periodicity", "world": "elections", "page": 11, "name": "מחזוריות (בחירות)", "definition": "הבחירות חוזרות במרווחי זמן ידועים וסדירים הקבועים בחוק כדי למנוע עריצות שלטון.", "points": [], "scenarios": [{"text": "ראש הממשלה הציע לדחות את הבחירות בחמש שנים \"כי המצב יציב\". חברי האופוזיציה הזכירו שהחוק קובע בחירות אחת לארבע שנים.", "quote": "החוק קובע בחירות אחת לארבע שנים"}], "confusables": ["popular_sovereignty", "universality", "limiting_government"]}, {"id": "equality_vote", "world": "elections", "page": 11, "name": "שוויוניות (בחירות)", "definition": "לכל מצביע קול אחד וכל קול שווה למשנהו.", "points": [], "scenarios": [{"text": "הוצע שלבעלי נכסים יהיו שני קולות בבחירות. מתנגדי ההצעה אמרו: \"הקול של עובד ניקיון שווה בדיוק לקול של מיליונר.\"", "quote": "הקול של עובד ניקיון שווה בדיוק לקול של מיליונר"}], "confusables": ["universality", "equality", "majority_rule"]}, {"id": "free_competition", "world": "elections", "page": 11, "name": "התמודדות / תחרות חופשית (בחירות)", "definition": "הבחירות מאפשרות תחרות הוגנת המבוססת על חירויות וזכויות פוליטיות (במיוחד חופש הביטוי וחופש ההתאגדות) בין שני מתמודדים או יותר. אסורה השפעה על המצביעים באמצעות איום, שוחד וכדומה.", "points": [], "scenarios": [{"text": "מועמד חילק לתושבים שוברי קנייה בתמורה להבטחה שיצביעו עבורו. ועדת הבחירות פסלה את המעשה.", "quote": "חילק לתושבים שוברי קנייה בתמורה להבטחה שיצביעו עבורו"}, {"text": "במדינה מסוימת רשאית להתמודד בבחירות רק מפלגה אחת, וכל השאר נאסרו.", "quote": "רשאית להתמודד בבחירות רק מפלגה אחת"}], "confusables": ["secrecy", "pluralism", "political_rights"]}, {"id": "national_system", "world": "elections", "page": 11, "name": "שיטת בחירות ארצית", "definition": "כל הארץ מהווה אזור בחירה אחד לצורך חישוב תוצאות הבחירות.", "points": [], "scenarios": [{"text": "בישראל הקולות מכל הערים והיישובים נספרים יחד, ואין חלוקה למחוזות בחירה נפרדים.", "quote": "הקולות מכל הערים והיישובים נספרים יחד"}], "confusables": ["proportional_system", "list_system"]}, {"id": "proportional_system", "world": "elections", "page": 11, "name": "שיטת בחירות יחסית", "definition": "חלוקת המושבים בפרלמנט הינה יחסית (בקירוב) למספר הקולות שבהם זכתה כל רשימת מועמדים / כל מפלגה. החישוב נעשה לפי מספר המצביעים בבחירות – ובתנאי שהמפלגה עברה את אחוז החסימה.", "points": [], "scenarios": [{"text": "מפלגה שקיבלה כ-25% מהקולות קיבלה כ-30 מושבים בכנסת, כרבע מהמושבים.", "quote": "קיבלה כ-25% מהקולות קיבלה כ-30 מושבים"}], "confusables": ["national_system", "list_system", "equality_vote"]}, {"id": "list_system", "world": "elections", "page": 11, "name": "שיטת בחירות רשימתית", "definition": "מצביעים למפלגה שלה רשימת מועמדים (ולא מצביעים לאדם מסוים). דרכים רווחות לקביעת הרשימה: בחירות מקדימות (פריימריז) / בחירות במוסדות המפלגה / ועדה מסדרת / ראש הרשימה קובע.", "points": [], "scenarios": [{"text": "בקלפי שם הבוחר במעטפה פתק עם אותיות של מפלגה, ולא את שמו של מועמד מסוים. את סדר המועמדים קבעו חברי המפלגה בפריימריז.", "quote": "פתק עם אותיות של מפלגה, ולא את שמו של מועמד מסוים"}], "confusables": ["proportional_system", "national_system"]}, {"id": "political_culture", "world": "culture", "page": 12, "name": "תרבות פוליטית דמוקרטית", "definition": "מערכת של ערכים, אמונות וצורות התנהגות המבטאים הזדהות עם עקרונות הדמוקרטיה. תרבות זו באה לידי ביטוי ברמה גבוהה של השתתפות בבחירות, השתתפות אזרחית, כיבוד זכויות אדם, אזרח וזכויות מיעוט והפנמת ערכים כמו פלורליזם, סובלנות והסכמיות. תרבות פוליטית דמוקרטית מחזקת את היציבות של המדינה הדמוקרטית. היא איננה קיימת במידה שווה בכל הדמוקרטיות.", "points": [], "scenarios": [{"text": "בעיר מסוימת אחוז ההצבעה גבוה מאוד, התושבים מתנדבים בוועדים ומכבדים זה את זכויותיו של זה גם כשהם חלוקים.", "quote": "אחוז ההצבעה גבוה מאוד, התושבים מתנדבים בוועדים"}], "confusables": ["pluralism", "tolerance", "citizen_duties"]}, {"id": "pluralism", "world": "culture", "page": 12, "name": "עקרון הפלורליזם", "definition": "הכרה בערך של ריבוי ומגוון דעות ועמדות של אנשים או קבוצות ותמיכה ועידוד גם בעצם קיומן וגם במתן אפשרות לביטוי מגוון דעות אלו של אנשים או קבוצות.", "points": [], "scenarios": [{"text": "מנהלת בית הספר הזמינה לכנס נציגים מכל המפלגות ואמרה: \"חשוב שתשמעו כמה שיותר דעות שונות.\"", "quote": "חשוב שתשמעו כמה שיותר דעות שונות"}, {"text": "המדינה מממנת ערוצי תקשורת בשפות שונות כדי שלכל הקבוצות בחברה יהיה קול.", "quote": "כדי שלכל הקבוצות בחברה יהיה קול"}], "confusables": ["tolerance", "consensus", "freedom_of_expression"]}, {"id": "tolerance", "world": "culture", "page": 12, "name": "עקרון הסובלנות", "definition": "קבלת השונה ומתן יחס מכבד לשונים ממני, לדעותיהם ולאורח חייהם. הימנעות מתגובות אלימות מילולית או פיזית בעת מחלוקת. הימנעות מהפעלת סמכות שלטונית כלפי עמדות ביקורתיות או מרגיזות.", "points": ["קבלת השונה ומתן יחס מכבד לשונים ממני", "הימנעות מאלימות מילולית או פיזית בעת מחלוקת", "הימנעות מהפעלת סמכות שלטונית כלפי עמדות ביקורתיות או מרגיזות"], "scenarios": [{"text": "בוויכוח סוער בכיתה אמר יואב: \"אני חושב שאתה טועה לגמרי, אבל אני מכבד את זה שאתה חושב אחרת.\"", "quote": "אני מכבד את זה שאתה חושב אחרת"}, {"text": "ראש העירייה ביקש מהמשטרה לפזר הפגנה שקראה לו \"כושל\", כי \"זה מרגיז\". היועמ״ש לא איפשר זאת.", "quote": "ביקש מהמשטרה לפזר הפגנה... כי זה מרגיז"}], "confusables": ["pluralism", "consensus", "dignity"]}, {"id": "consensus", "world": "culture", "page": 12, "name": "עקרון ההסכמיות", "definition": "הסכמה רחבה בין קבוצות בחברה על כללי משחק בסיסיים או על אופייה הבסיסי של החברה והמדינה (למשל: הסכמה שהרוב קובע, שכולם מצייתים לחוק, הסכמה על המכנה המשותף הרחב בנושאים עקרוניים כגון סוגיות של דת ומדינה, יחסי רוב ומיעוט, צורת המשטר וכלליו). ההסכמיות מאפשרת ניהול חיים משותפים וקיום בצוותא – על אף חילוקי הדעות, ומחזקת יציבות חברתית/שלטונית.", "points": ["ישנו מתח בין הפלורליזם המעודד ריבוי דעות לבין ההסכמיות המחזקת את האחידות והערכים המשותפים"], "scenarios": [{"text": "למרות מחלוקת עזה על הרפורמה, ראשי שתי המפלגות הודיעו: \"כולנו מסכימים שבסוף נכבד את תוצאות ההצבעה ואת החוק.\"", "quote": "כולנו מסכימים שבסוף נכבד את תוצאות ההצבעה ואת החוק"}], "confusables": ["pluralism", "tolerance", "majority_rule"]}, {"id": "majority_rule", "world": "culture", "page": 12, "name": "עקרון הכרעת הרוב", "definition": "עיקרון הקובע שמתוך כמה אפשרויות מתקבלת זו שרוב המצביעים תומכים בה. אסור לרוב לקבל החלטות שפוגעות באופן לא סביר בזכויות יסוד ובמיוחד בזכויות המיעוט (עריצות הרוב).", "points": [], "scenarios": [{"text": "מועצת התלמידים הצביעה על יעד הטיול: 18 בחרו בגליל ו-12 בנגב, ולכן הטיול יתקיים בגליל.", "quote": "18 בחרו בגליל ו-12 בנגב, ולכן הטיול יתקיים בגליל"}], "confusables": ["tyranny_of_majority", "popular_sovereignty", "consensus"]}, {"id": "tyranny_of_majority", "world": "culture", "page": 12, "name": "עריצות הרוב", "definition": "שימוש לרעה בעקרון הכרעת הרוב: הרוב מנצל את כוחו לרעה, פוגע בזכויות המיעוט ומקבל החלטות שלא יאפשרו למיעוט לצבור עוצמה ולהפוך לרוב.", "points": ["שימוש לרעה בעקרון הכרעת הרוב", "הרוב מנצל את כוחו לרעה", "פוגע בזכויות המיעוט", "מקבל החלטות שלא יאפשרו למיעוט לצבור עוצמה ולהפוך לרוב"], "scenarios": [{"text": "מפלגת הרוב העבירה חוק שאוסר על מפלגות קטנות לפרסם תעמולה בטלוויזיה, כדי שלא יוכלו לגדול.", "quote": "כדי שלא יוכלו לגדול"}, {"text": "רוב תושבי העיר הצביעו לסגור את בית הכנסת היחיד של הקהילה הקטנה בעיר.", "quote": "לסגור את בית הכנסת היחיד של הקהילה הקטנה"}], "confusables": ["majority_rule", "group_rights", "improper_discrimination"]}, {"id": "limiting_government", "world": "limits", "page": 13, "name": "עקרון הגבלת השלטון", "definition": "השלטון מחזיק באמצעים (כלכליים, אנושיים, מקורות מידע, מנגנוני אכיפה) המעניקים לו עוצמה רבה. קיימת סכנה בניצול לרעה של כוחו של השלטון ובפגיעה בזכויות אדם או בזכויות קבוצה. האמצעים שנועדו להגביל את השלטון הינם הפרדת רשויות, חוקה ומנגנוני פיקוח וביקורת פורמליים/מוסדיים ובלתי פורמליים/לא מוסדיים.", "points": ["אמצעים להגבלת השלטון: הפרדת רשויות, חוקה, פיקוח וביקורת פורמליים, פיקוח וביקורת בלתי פורמליים"], "scenarios": [{"text": "ראש הממשלה ביקש לקבל סמכות למנות לבדו את כל השופטים ואת מבקר המדינה. מומחים הזהירו שאז לא יהיה מי שיבקר אותו.", "quote": "אז לא יהיה מי שיבקר אותו"}], "confusables": ["separation_of_powers", "rule_of_law", "formal_oversight"]}, {"id": "constitution", "world": "limits", "page": 13, "name": "חוקה", "definition": "מערכת של נורמות וערכי יסוד המנוסחים במסמך מכונן. בעלת עליונות משפטית על חקיקה רגילה. קובעת את: 1. עקרונות וערכי היסוד של המדינה / חזון / המאפיינים הייחודיים של המדינה. 2. מבנה רשויות השלטון, סמכויותיהן והיחסים ביניהן. 3. עקרונות השמירה על זכויות האדם והאזרח במדינה.", "points": ["עליונות משפטית על חקיקה רגילה", "עקרונות וערכי היסוד של המדינה", "מבנה רשויות השלטון וסמכויותיהן", "השמירה על זכויות האדם והאזרח"], "scenarios": [{"text": "בית המשפט העליון במדינה פסל חוק רגיל כי הוא סותר את המסמך המכונן של המדינה, הקובע את זכויות האזרח.", "quote": "פסל חוק רגיל כי הוא סותר את המסמך המכונן"}], "confusables": ["limiting_government", "rule_of_law", "separation_of_powers"]}, {"id": "formal_oversight", "world": "limits", "page": 13, "name": "מנגנוני פיקוח וביקורת פורמליים / מוסדיים", "definition": "ביקורת שמקיימים גופים ומוסדות שלטוניים כמו הפרלמנט (אופוזיציה, ועדות הכנסת, כלים פרלמנטריים), מבקר המדינה, נציב תלונות הציבור, מערכת המשפט שהוסמכו לשם כך בחוק לשם פיקוח על השלטון ועל חוקיות פעולותיו באמצעות פרסום דוחות / הנחיות / חוקים / מסמכים רשמיים אחרים המציגים את פעולות השלטון.", "points": ["גופים שהוסמכו בחוק: אופוזיציה, ועדות הכנסת, מבקר המדינה, נציב תלונות הציבור, מערכת המשפט"], "scenarios": [{"text": "מבקר המדינה פרסם דוח חריף שחשף כי משרד הבריאות לא נערך כראוי לחורף.", "quote": "מבקר המדינה פרסם דוח חריף"}, {"text": "ועדה בכנסת זימנה את שר האוצר להסביר מדוע לא הועבר התקציב לבתי החולים.", "quote": "ועדה בכנסת זימנה את שר האוצר להסביר"}], "confusables": ["informal_oversight", "separation_of_powers", "limiting_government"]}, {"id": "informal_oversight", "world": "limits", "page": 13, "name": "מנגנוני פיקוח וביקורת בלתי פורמליים / לא מוסדיים", "definition": "ביקורת שמקיימים גופים, ארגונים או פרטים באמצעות הפגנות / שביתות / עצרות / עצומות / יצירות אומנות (קולנוע, טלוויזיה, תיאטרון, ספרות, אמנות פלסטית), הופעה וכתיבה באמצעי התקשורת וברשתות חברתיות ללא הסמכה חוקית אלא מיוזמתם של אזרחים או קבוצות לשם הגבלת השלטון ופיקוח עליו ועל חוקיות פעולותיו, וזאת באמצעות לחץ על קובעי מדיניות והבעת ביקורת פוליטית וחברתית על השלטון וקיום דיון ציבורי.", "points": ["ללא הסמכה חוקית – מיוזמת אזרחים", "הפגנות, שביתות, עצומות, אמנות, תקשורת, רשתות חברתיות"], "scenarios": [{"text": "עיתונאית חשפה בכתבת תחקיר שראש עירייה העביר מכרזים לחברים שלו.", "quote": "עיתונאית חשפה בכתבת תחקיר"}, {"text": "אלפי הורים חתמו על עצומה ברשת נגד קיצוץ בתקציב החינוך והפגינו מול משרד החינוך.", "quote": "חתמו על עצומה ברשת... והפגינו מול משרד החינוך"}], "confusables": ["formal_oversight", "freedom_of_expression", "pluralism"]}, {"id": "separation_of_powers", "world": "limits", "page": 13, "name": "עקרון הפרדת הרשויות", "definition": "פיצול הכוח השלטוני לשלוש רשויות: מחוקקת, מבצעת ושופטת. במטרה להגביל את השלטון על ידי מניעת ריכוז הכוח בידי גורם שלטוני אחד. לכל רשות סמכויות ייחודיות בתחומה אך לא מוחלטות (כלומר יש מקרים של עירוב סמכויות) ומתקיימים בין הרשויות יחסי איזון, ריסון, פיקוח ובקרה (הנקראים איזונים ובלמים).", "points": ["שלוש רשויות: מחוקקת, מבצעת, שופטת", "איזונים ובלמים"], "scenarios": [{"text": "הממשלה רצתה להעביר חוק בעצמה, בלי אישור הכנסת. נאמר לה שחקיקה היא בסמכות הכנסת בלבד.", "quote": "חקיקה היא בסמכות הכנסת בלבד"}, {"text": "בית המשפט פסל החלטה של שר כי חרגה מסמכותו.", "quote": "בית המשפט פסל החלטה של שר"}], "confusables": ["limiting_government", "formal_oversight", "rule_of_law"]}, {"id": "rule_of_law", "world": "limits", "page": 14, "name": "עקרון שלטון החוק", "definition": "קובע את כללי ההתנהגות באמצעות חוקים. חובת הציות לחוק חלה על כולם – אזרחים ושלטון. החוק נחקק על ידי הרשות המחוקקת בהליך קבוע בחוק. החוקים חייבים להיות שוויוניים (בתוכנם ובאכיפתם), ברורים ופומביים.", "points": ["חובת הציות חלה על כולם – אזרחים ושלטון", "החוק נחקק בהליך קבוע בחוק", "חוקים שוויוניים, ברורים ופומביים"], "scenarios": [{"text": "שר נתפס נוהג במהירות מופרזת וקיבל דוח כמו כל אזרח. השוטר אמר: \"החוק חל על כולם.\"", "quote": "החוק חל על כולם"}, {"text": "חוק חדש פורסם ברשומות לפני שנכנס לתוקף, כדי שכל האזרחים יוכלו לדעת מה הוא קובע.", "quote": "פורסם ברשומות לפני שנכנס לתוקף"}], "confusables": ["limiting_government", "equality", "constitution"]}, {"id": "regular_crime", "world": "obedience", "page": 14, "name": "עבריינות פלילית רגילה", "definition": "עבריינות – עבירה על החוק. המבצע: אדם שפועל בדרך אקטיבית-פעילה, לרוב אלימה. אינו מוכן לשאת בתוצאות מעשיו. המניע: אינטרס אישי. יחסה של החברה: שלילי – בשל הסכנה לסדר הציבורי ולשלום הציבור. יחסה של המדינה: רואה בכך עבירה על החוק, תפעיל אמצעי אכיפה.", "points": ["מבצע: אדם רגיל, אקטיבי, לרוב אלים, לא מוכן לשאת בתוצאות", "מניע: אינטרס אישי", "חברה: שלילי – סכנה לסדר ולשלום הציבור", "מדינה: עבירה, תפעיל אמצעי אכיפה"], "scenarios": [{"text": "שני צעירים פרצו לחנות בלילה, גנבו טלפונים וברחו מהמקום כדי לא להיתפס.", "quote": "גנבו טלפונים וברחו מהמקום כדי לא להיתפס"}], "confusables": ["personal_govt_crime", "public_govt_crime"]}, {"id": "personal_govt_crime", "world": "obedience", "page": 14, "name": "עבריינות שלטונית אישית – שחיתות שלטונית", "definition": "המבצע: נושא משרה ציבורית (נבחר או ממונה), המנצל סמכותו לרעה בניגוד לחוק. אינו מוכן לשאת בתוצאות מעשיו. המניע: אינטרס אישי. יחסה של החברה: שלילי – בשל הסכנה לאבדן אמון הציבור ברשויות השלטון שפועלות לא לטובת כלל הציבור. יחסה של המדינה: רואה בכך עבירה על החוק, תפעיל אמצעי אכיפה.", "points": ["מבצע: נושא משרה ציבורית שמנצל סמכותו לרעה", "מניע: אינטרס אישי", "חברה: שלילי – אובדן אמון הציבור ברשויות"], "scenarios": [{"text": "ראש מועצה קיבל דירה במתנה מקבלן, ובתמורה אישר לו לבנות בניין גבוה מהמותר.", "quote": "קיבל דירה במתנה מקבלן, ובתמורה אישר לו"}], "confusables": ["public_govt_crime", "regular_crime", "tyranny_of_majority"]}, {"id": "public_govt_crime", "world": "obedience", "page": 14, "name": "עבריינות שלטונית ציבורית", "definition": "המבצע: נושא משרה ציבורית (נבחר או ממונה), המנצל סמכותו לרעה בניגוד לחוק. אינו מוכן לשאת בתוצאות מעשיו. המניע: להיטיב עם ציבור מסוים או טובת הכלל מנקודת מבטו של מפר החוק. יחסה של החברה: שלילי – בשל הסכנה לאבדן אמון הציבור ברשויות השלטון שפועלות לא לטובת כלל הציבור ובשל האפליה הנוצרת כתוצאה מהעבירה בין קבוצות בחברה. חלק יגלו סלחנות, למרות הפרת החוק, כי הפרת החוק מטיבה איתם. יחסה של המדינה: רואה בכך עבירה על החוק, תפעיל אמצעי אכיפה.", "points": ["מבצע: נושא משרה ציבורית שמנצל סמכותו לרעה", "מניע: להיטיב עם ציבור מסוים / טובת הכלל בעיניו", "חברה: שלילי – אובדן אמון ואפליה בין קבוצות; חלק יגלו סלחנות"], "scenarios": [{"text": "שר העביר בניגוד לנהלים תקציב מיוחד רק ליישובים שבהם גרים מצביעי מפלגתו, ואמר: \"עשיתי את זה למען התושבים, לא בשבילי.\"", "quote": "עשיתי את זה למען התושבים, לא בשבילי"}], "confusables": ["personal_govt_crime", "regular_crime", "improper_discrimination"]}, {"id": "illegal_order", "world": "obedience", "page": 15, "name": "פקודה בלתי חוקית", "definition": "מי נותן: בעל הסמכות במערכת צבאית או משטרתית. תוכן: לבצע מעשה שאינו מעוגן בחוק. מקבל הפקודה: חייב לציית. לאחר הביצוע: מקבל הפקודה יכול להתלונן על נותן הפקודה; ניתן להעמיד לדין את נותן הפקודה; ניתן להעמיד לדין את הפקוד אם לא ביצע את הפקודה. דוגמה: פקודה להיכנס לבית ולערוך חיפוש ללא צו חיפוש.", "points": ["מקבל הפקודה חייב לציית ויכול להתלונן אחר כך", "דוגמה: חיפוש בבית ללא צו חיפוש"], "scenarios": [{"text": "מפקד הורה לשוטר להיכנס לדירה ולחפש בה, למרות שלא היה בידם צו חיפוש. השוטר ביצע את הפקודה ולאחר מכן הגיש תלונה.", "quote": "למרות שלא היה בידם צו חיפוש"}], "confusables": ["manifestly_illegal_order", "regular_crime"]}, {"id": "manifestly_illegal_order", "world": "obedience", "page": 15, "name": "פקודה בלתי חוקית בעליל (חובת אי ציות)", "definition": "הוראה אשר ניתנת על ידי מפקד מוסמך או רשות מוסמכת לבצע מעשה שאינו על פי החוק. ההוראה סותרת ערכי מוסר בסיסיים של חברה דמוקרטית ופוגעת פגיעה חמורה בזכויות אדם. חובה שלא לציית להוראה זו אפילו במסגרת צבאית. ציות יגרום להעמדה לדין של נותן הפקודה והמבצע. \"מן הדין שיתנוסס כדגל שחור מעל הפקודה הנתונה כאזהרה האומרת: אסור. אי חוקיות שדוקרת את העין ומקוממת את הלב\".", "points": ["מעשה בלתי מוסרי בברור – פגיעה בחפים מפשע / במי שאינו מאיים, בצורה קיצונית, בהעדר סיבה מוצדקת", "אסור לציית / חובה לסרב", "נותן הפקודה יועמד לדין, ומבצע הפקודה יועמד לדין ויואשם בעבירה פלילית", "דוגמה: להרוג חף מפשע", "\"דגל שחור\"; \"דוקרת את העין ומקוממת את הלב\""], "scenarios": [{"text": "מפקד הורה לחייל לירות באזרחים לא חמושים שעמדו בשקט ליד המחסום. החייל סירב ואמר: \"זו פקודה שאסור לבצע.\"", "quote": "לירות באזרחים לא חמושים שעמדו בשקט"}], "confusables": ["illegal_order", "right_to_life", "dignity"]}, {"id": "natural_rights", "world": "rights", "page": 16, "name": "זכויות טבעיות (זכויות האדם)", "definition": "זכויות יסוד המוקנות לכל אדם באשר הוא אדם. הן אינן מוענקות ע״י השלטון ואינן תלויות בו. תיאור הזכויות כטבעיות משמעותו שהן שייכות לאדם מעצם היותו אדם. אחריות השלטון לשמירה על הזכויות האלו. מקובל למנות בין הזכויות הטבעיות את הזכויות הבאות: כבוד, חיים וביטחון, הליך הוגן, חירות, שוויון וקניין.", "mnemonic": "כח החשק – כבוד, חיים וביטחון, הליך הוגן, חירות, שוויון, קניין", "points": [], "scenarios": [{"text": "פעיל זכויות אדם אמר: \"הזכויות האלה לא ניתנו לנו במתנה מהממשלה. הן שלנו מעצם היותנו בני אדם.\"", "quote": "הן שלנו מעצם היותנו בני אדם"}], "confusables": ["political_rights", "group_rights", "citizen_duties"]}, {"id": "right_to_life", "world": "rights", "page": 16, "name": "הזכות לחיים ולביטחון", "definition": "אין לפגוע בחייו ובגופו של אדם. חובת המדינה להגן על כל בני האדם החיים בשטחה מפני פגיעה בחייהם ובגופם בידי אחרים.", "points": [], "scenarios": [{"text": "תושבי שכונה התלוננו שאלימות ויריות ברחוב מסכנות את חייהם, ודרשו מהמשטרה להגביר את הנוכחות באזור.", "quote": "מסכנות את חייהם, ודרשו מהמשטרה להגביר את הנוכחות"}], "confusables": ["dignity", "security_democracy", "property"]}, {"id": "property", "world": "rights", "page": 16, "name": "הזכות לקניין", "definition": "לכל אדם הזכות להחזיק ברכוש ולעשות בו כרצונו. אין לפגוע בקניינו של אדם (הן קניין חומרי והן קניין רוחני).", "points": ["קניין חומרי וקניין רוחני"], "scenarios": [{"text": "אתר אינטרנט העלה שיר של זמרת בלי רשותה ומכר אותו. הזמרת תבעה את האתר.", "quote": "העלה שיר של זמרת בלי רשותה ומכר אותו"}, {"text": "העירייה הפקיעה חלק מחצרו של אדם כדי לסלול כביש, בלי לשלם לו פיצוי.", "quote": "הפקיעה חלק מחצרו... בלי לשלם לו פיצוי"}], "confusables": ["privacy", "occupation", "good_name"]}, {"id": "due_process", "world": "rights", "page": 16, "name": "הזכות להליך משפטי הוגן", "definition": "אדם חף מפשע עד שלא הוכחה אשמתו. כל אדם זכאי למשפט הוגן ופומבי, ושלא ייפגעו זכויותיו מעבר לנדרש במהלך הליך נגדו. כדי להבטיח זאת נקבעו כללים ובהם למשל: ייצוג ע״י עו״ד; שופטים בלתי תלויים; ענישה בהתאם לחוק בלבד; זכאי לדעת במה הוא נאשם ולראות את הראיות נגדו; זכאי לערער לערכאה גבוהה יותר.", "points": ["חף מפשע עד שלא הוכחה אשמתו", "ייצוג ע״י עו״ד", "שופטים בלתי תלויים", "ענישה בהתאם לחוק בלבד", "לדעת במה הוא נאשם ולראות את הראיות", "לערער לערכאה גבוהה יותר"], "scenarios": [{"text": "נאשם התלונן שלא אפשרו לו לראות את הראיות נגדו ולא נתנו לו להיפגש עם עורך דין לפני המשפט.", "quote": "לא אפשרו לו לראות את הראיות נגדו"}], "confusables": ["administrative_detention", "dignity", "rule_of_law"]}, {"id": "dignity", "world": "rights", "page": 16, "name": "הזכות לכבוד", "definition": "הזכות שלא להיות חשוף ליחס משפיל / מזלזל / מבזה / פוגעני או יחס אכזרי ובלתי אנושי.", "points": [], "scenarios": [{"text": "מנהל עבודה צעק על עובד מול כולם, קרא לו בשמות גנאי ואילץ אותו לנקות את הרצפה כעונש.", "quote": "קרא לו בשמות גנאי"}], "confusables": ["good_name", "tolerance", "right_to_life"]}, {"id": "privacy", "world": "rights", "page": 16, "name": "הזכות לפרטיות", "definition": "הזכות לחיות ללא חשיפה וחדירה לחייו, לגופו, לחפציו (ללא הסכמתו או רשותו).", "points": [], "scenarios": [{"text": "מעסיק התקין מצלמה בחדר ההלבשה של העובדים בלי לספר להם.", "quote": "התקין מצלמה בחדר ההלבשה... בלי לספר להם"}, {"text": "אמא קראה את היומן האישי של בתה בלי רשותה.", "quote": "קראה את היומן האישי של בתה בלי רשותה"}], "confusables": ["good_name", "property", "dignity"]}, {"id": "good_name", "world": "rights", "page": 17, "name": "הזכות לשם טוב", "definition": "הזכות שלא יפרסמו אודותיו מידע שיקרי שלילי.", "points": [], "scenarios": [{"text": "תלמיד הפיץ בקבוצת וואטסאפ שמורה לקחה כסף מהקופה של הכיתה, למרות שזה לא נכון.", "quote": "למרות שזה לא נכון"}], "confusables": ["privacy", "dignity", "freedom_of_expression"]}, {"id": "equality", "world": "rights", "page": 17, "name": "הזכות לשוויון", "definition": "כל בני האדם נולדו שווים בערכם מעצם טבעם כבני אנוש ולכל אדם הזכות לקבל יחס זהה לכל אדם אחר. אין להפלות אדם בשל זהותו, שיוכו או סממן חיצוני כלשהו (דת, גזע, מין, העדפה מינית, צבע עור, מוצא, מראה חיצוני, מוגבלות מסוימת). מובן מצומצם: לכל אדם הזכות לשוויון בפני החוק ולשוויון פוליטי (הזכות לבחור ולהיבחר). מובן רחב: זכות לשוויון הזדמנויות במובן הכלכלי והחברתי.", "points": ["מובן מצומצם: שוויון בפני החוק ושוויון פוליטי", "מובן רחב: שוויון הזדמנויות כלכלי וחברתי"], "scenarios": [{"text": "המדינה בנתה בתי ספר מודרניים ביישובי הפריפריה כדי שלילדים שם יהיו אותם סיכויים להצליח כמו לילדים במרכז.", "quote": "יהיו אותם סיכויים להצליח"}], "confusables": ["improper_discrimination", "affirmative_action", "equality_vote"]}, {"id": "improper_discrimination", "world": "rights", "page": 17, "name": "אפליה פסולה", "definition": "פגיעה בזכות לשוויון על ידי הענקת יחס שונה לבני אדם ללא סיבה מוצדקת אלא למשל בשל זהותם, שיוכם או סממן חיצוני כלשהו (דת, גזע, מין, העדפה מינית, צבע עור, מוצא, מראה חיצוני, מוגבלות מסוימת).", "points": ["סוג מדיניות – מקרה של יחס של אי שוויון"], "scenarios": [{"text": "מועדון לילה סירב להכניס צעירים בגלל המוצא שלהם, למרות שהיו לבושים כנדרש.", "quote": "סירב להכניס צעירים בגלל המוצא שלהם"}], "confusables": ["permitted_distinction", "affirmative_action", "equality"]}, {"id": "permitted_distinction", "world": "rights", "page": 17, "name": "הבחנה מותרת", "definition": "הענקת יחס שונה לבני אדם כאשר השונות רלוונטית לנושא הנידון.", "points": ["סוג מדיניות – מקרה של יחס של אי שוויון"], "scenarios": [{"text": "חברת תעופה לא קיבלה לעבודת טייס מועמד עם ליקוי ראייה חמור, כי ראייה טובה הכרחית לבטיחות הטיסה.", "quote": "ראייה טובה הכרחית לבטיחות הטיסה"}], "confusables": ["improper_discrimination", "affirmative_action", "equality"]}, {"id": "affirmative_action", "world": "rights", "page": 17, "name": "העדפה מתקנת", "definition": "הענקת הטבה או העדפה לקבוצה או אוכלוסייה מקופחת / מופלית / חלשה, זאת למשך זמן מסוים במטרה לצמצם פערים. ישנו ויכוח ציבורי לגבי היקף השימוש הראוי במדיניות זו בין השאר מכיוון שהיא יוצרת אפליה כלפי פרטים אחרים.", "points": ["לקבוצה מקופחת, לזמן מסוים, כדי לצמצם פערים", "יוצרת אפליה כלפי פרטים אחרים – ולכן שנויה במחלוקת"], "scenarios": [{"text": "החברה הממשלתית החליטה שבחמש השנים הקרובות, בין שני מועמדים בעלי כישורים שווים, תועדף אישה, כדי לצמצם את הפער בהנהלה.", "quote": "בחמש השנים הקרובות... תועדף אישה, כדי לצמצם את הפער"}], "confusables": ["improper_discrimination", "permitted_distinction", "group_rights"]}, {"id": "liberty", "world": "rights", "page": 17, "name": "הזכות לחירות (ערך החירות)", "definition": "האדם הוא יצור אוטונומי ותבוני ולכן לכל אדם זכות לחיות את חייו כרצונו, לעצב את אישיותו כרצונו וליצור בדרכו את סיפור חייו. אין לשלול את חירותו של אדם על ידי מעצר או על ידי הגבלת חופש הפעולה שלו. מן הזכות לחירות נגזרות חירויות רבות וביניהן: חופש המחשבה והמצפון, חופש הביטוי, חופש התנועה, חופש העיסוק, חופש הדת, חופש מדת ועוד. חוקים רבים בכל חברה מגבילים בהכרח את הזכות לחירות ונגזרותיה וגבולות הפגיעה הסבירה שנויים במחלוקת ציבורית בכל חברה דמוקרטית.", "points": ["אדם אוטונומי ותבוני – חי את חייו כרצונו", "אין לשלול חירות ע״י מעצר או הגבלת חופש הפעולה"], "scenarios": [{"text": "נועה החליטה, בניגוד לרצון הוריה, לוותר על לימודי משפטים וללמוד מוזיקה. \"זה הסיפור שלי ואני אכתוב אותו,\" אמרה.", "quote": "זה הסיפור שלי ואני אכתוב אותו"}], "confusables": ["occupation", "freedom_of_conscience", "movement"]}, {"id": "freedom_of_expression", "world": "rights", "page": 18, "name": "חופש הביטוי", "definition": "לכל אדם זכות לבטא ולהפיץ את עמדותיו, דעותיו ואמונותיו וזאת בכל דרך (לבוש, פולחן, תקשורת, אמנות, דיבור, בכתב וכו׳) ובפומבי / בגלוי.", "points": ["נגזרת מן הזכות לחירות"], "scenarios": [{"text": "בלוגרית פרסמה פוסט חריף נגד מדיניות הממשלה, ואלפים שיתפו אותו.", "quote": "פרסמה פוסט חריף נגד מדיניות הממשלה"}, {"text": "זמר הופיע עם חולצה שעליה כתובה מחאה פוליטית.", "quote": "חולצה שעליה כתובה מחאה פוליטית"}], "confusables": ["freedom_of_conscience", "protest_criticism", "informal_oversight"]}, {"id": "freedom_of_conscience", "world": "rights", "page": 18, "name": "חופש המחשבה והמצפון", "definition": "לכל אדם זכות להחזיק בכל דעה ומחשבה בכל נושא לפי בחירתו. לכל אדם זכות לפעול בהתאם למצפונו ולא לפעול בניגוד למצפונו.", "points": ["נגזרת מן הזכות לחירות"], "scenarios": [{"text": "רופא סירב להשתתף בניסוי על בעלי חיים ואמר: \"המצפון שלי לא מאפשר לי לעשות את זה.\"", "quote": "המצפון שלי לא מאפשר לי לעשות את זה"}], "confusables": ["freedom_of_expression", "freedom_of_religion", "liberty"]}, {"id": "occupation", "world": "rights", "page": 18, "name": "חופש העיסוק", "definition": "לכל אדם זכות לעבוד בכל עבודה, מקצוע או משלח יד (כפוף להכשרה נדרשת / רישוי). (חופש העיסוק מוענק בישראל לאזרחים ותושבים בלבד.)", "points": ["נגזרת מן הזכות לחירות", "בישראל – לאזרחים ותושבים בלבד"], "scenarios": [{"text": "עירייה אסרה על פתיחת עסקים חדשים של מספרות בעיר כדי להגן על המספרות הקיימות. ספרית צעירה עתרה לבית המשפט.", "quote": "אסרה על פתיחת עסקים חדשים של מספרות"}], "confusables": ["liberty", "property", "movement"]}, {"id": "movement", "world": "rights", "page": 18, "name": "חופש התנועה", "definition": "לכל אדם זכות לנוע כרצונו ממקום למקום ולהימצא בכל מקום. (זכות הכניסה החופשית למדינה מוקנית לאזרחים בלבד.)", "points": ["נגזרת מן הזכות לחירות", "זכות הכניסה החופשית למדינה – לאזרחים בלבד"], "scenarios": [{"text": "אזרח שרצה לטוס לחו״ל גילה שהוצא נגדו צו עיכוב יציאה מהארץ.", "quote": "הוצא נגדו צו עיכוב יציאה מהארץ"}], "confusables": ["liberty", "administrative_detention", "occupation"]}, {"id": "freedom_of_religion", "world": "rights", "page": 18, "name": "חופש הדת", "definition": "לכל אדם הזכות להחזיק בכל אמונה, להשתייך לכל קבוצה דתית, לקיים כל טקס, מנהג, או פולחן.", "points": ["נגזרת מן הזכות לחירות"], "scenarios": [{"text": "קהילה קטנה ביקשה אישור לקיים תפילה ציבורית בחג שלה בפארק העירוני, והעירייה אישרה.", "quote": "לקיים תפילה ציבורית בחג שלה"}], "confusables": ["freedom_from_religion", "freedom_of_conscience", "group_rights"]}, {"id": "freedom_from_religion", "world": "rights", "page": 18, "name": "חופש מדת", "definition": "לכל אדם הזכות שלא להחזיק באמונה, לא להשתייך לקבוצה דתית, לא לסבול מכפיה או הטפה דתית, לא לקיים טקס או פולחן דתי בניגוד לרצונו.", "points": ["נגזרת מן הזכות לחירות"], "scenarios": [{"text": "זוג שאינו דתי ביקש להתחתן בטקס אזרחי, בלי טקס דתי שאינו מתאים לאמונתם.", "quote": "בלי טקס דתי שאינו מתאים לאמונתם"}], "confusables": ["freedom_of_religion", "freedom_of_conscience", "liberty"]}, {"id": "political_rights", "world": "rights", "page": 18, "name": "זכויות פוליטיות (כוללות זכויות אזרח)", "definition": "זכויות הקשורות לתחום הפוליטי ולשותפות בניהול המסגרת המדינית. (חלקן זכויות אזרח בלבד, וחלקן מבוססות על הזכויות הטבעיות של כל אדם.) זכויות פוליטיות שהן זכויות אזרח (מוענקות לאזרחי המדינה בלבד): הזכות לבחור ולהיבחר; הזכות להתארגן כמפלגה המתמודדת בבחירות. זכויות פוליטיות שהן זכויות אדם (ולכן אינן מוגבלות לאזרחי המדינה): חופש ההפגנה והמחאה; האפשרות לבקר את השלטון.", "points": ["זכויות אזרח: לבחור ולהיבחר, להתארגן כמפלגה", "זכויות אדם: חופש ההפגנה והמחאה, האפשרות לבקר את השלטון"], "scenarios": [{"text": "תושב זר שגר בישראל השתתף בהפגנה נגד הממשלה, אך לא יכול היה להצביע בבחירות לכנסת כי אינו אזרח.", "quote": "לא יכול היה להצביע בבחירות לכנסת כי אינו אזרח"}, {"text": "קבוצת סטודנטים הקימה מפלגה חדשה והגישה רשימה לוועדת הבחירות.", "quote": "הקימה מפלגה חדשה והגישה רשימה"}], "confusables": ["natural_rights", "universality", "freedom_of_expression"]}, {"id": "group_rights", "world": "rights", "page": 19, "name": "זכויות קבוצתיות – תרבותיות (זכויות מיעוט)", "definition": "זכויות קיבוציות הניתנות לקבוצות אתניות-תרבותיות או מיעוטים לאומיים. באות לידי ביטוי בתחומים הבאים: שפה, חינוך, תרבות, ייצוג כקבוצה. מטרתן להסדיר בצורה מוסדית את זהותה הייחודית של הקבוצה במדינה. המדינה קובעת את היקף הענקתן ואת מידת התמיכה המוסדית בהן (לעומת זכויות הפרט של המיעוט שהן זכויות יסוד בכל דמוקרטיה).", "points": ["שפה, חינוך, תרבות, ייצוג כקבוצה", "המדינה קובעת את היקפן – בניגוד לזכויות הפרט שהן זכויות יסוד"], "scenarios": [{"text": "משרד החינוך מממן בתי ספר שבהם הלימוד הוא בשפת האם של הקהילה, עם תוכנית לימודים שמלמדת את ההיסטוריה והתרבות שלה.", "quote": "הלימוד הוא בשפת האם של הקהילה"}], "confusables": ["affirmative_action", "pluralism", "freedom_of_religion"]}, {"id": "rights_conflict", "world": "rights", "page": 19, "name": "התנגשות בין זכויות", "definition": "הזכויות הן יחסיות (כלומר אינן מוחלטות) – הן סותרות לא פעם זו את זו ובאף חברה אנושית הן אינן ניתנות להגשמה באורח מלא. לכן במקרה של התנגשות בין זכויות או בין זכות לאינטרס ציבורי נדרש לעשות איזון סביר בין הזכויות ואם נדרש לשם כך לפגוע באחת מהן, צריך שתהיה פגיעה מידתית בלבד בזכות הנפגעת. העילות הבסיסיות המוצדקות להגבלת זכויותיו של אדם היא כאשר מימושן פוגע בזכויות הזולת או באינטרס הציבורי.", "points": ["זכויות יחסיות ולא מוחלטות", "איזון סביר ופגיעה מידתית בלבד", "עילה להגבלה: פגיעה בזכויות הזולת או באינטרס הציבורי"], "scenarios": [{"text": "עיתון רצה לפרסם תמונות מחתונה פרטית של שחקנית מפורסמת, בטענה שהציבור רוצה לדעת. השחקנית טענה שזו חדירה לחייה. בית המשפט התיר לפרסם רק את הידיעה, בלי התמונות.", "quote": "התיר לפרסם רק את הידיעה, בלי התמונות"}], "confusables": ["security_democracy", "privacy", "freedom_of_expression"]}, {"id": "human_duties", "world": "rights", "page": 19, "name": "חובות האדם כאדם", "definition": "1. להכיר בזכויותיו של הזולת. 2. להימנע מפגיעה בזכויות של אדם אחר.", "points": [], "scenarios": [{"text": "דני רצה להשמיע מוזיקה בקולי קולות באמצע הלילה, אבל הנמיך כשנזכר שהשכנים זכאים לישון בשקט.", "quote": "נזכר שהשכנים זכאים לישון בשקט"}], "confusables": ["citizen_duties", "tolerance", "rights_conflict"]}, {"id": "citizen_duties", "world": "rights", "page": 19, "name": "חובות האזרח וערכים אזרחיים", "definition": "1. החובה לציית לחוק ולחובות הקבועות בו (תשלום מיסים, שירות צבאי וכו׳). 2. ישנו ערך אזרחי להשתתפות בעיצוב החיים הציבוריים (הצבעה בבחירות, ביקורת השלטון, השתתפות אזרחית וכו׳). 3. ישנו ערך אזרחי בתרומה לקהילה ולמדינה.", "points": ["חובה: ציות לחוק – מיסים, שירות צבאי", "ערך: השתתפות בחיים הציבוריים – הצבעה, ביקורת", "ערך: תרומה לקהילה ולמדינה"], "scenarios": [{"text": "מיכל מתנדבת פעם בשבוע בבנק המזון השכונתי, ובבחירות תמיד הולכת להצביע.", "quote": "מתנדבת פעם בשבוע בבנק המזון השכונתי"}], "confusables": ["human_duties", "political_culture", "rule_of_law"]}, {"id": "defensive_democracy", "world": "defense", "page": 20, "name": "הדמוקרטיה המתגוננת (זכות הדמוקרטיה להגן על עצמה)", "definition": "הגנה על המשטר הדמוקרטי, עקרונותיו ואופי המדינה מפני אדם או קבוצה שפועלים בזירה הציבורית, תוך ניצול הכלים הדמוקרטיים כדי לפגוע או להפיל את המשטר הדמוקרטי או את אופי המדינה. במצבי איום ממשי, המדינה מתגוננת על ידי כך ששוללת לאדם זה או קבוצה זו את הזכות להיבחר או את הזכות להתארגן ולפעול מבחינה פוליטית ומגבילה את חופש הביטוי.", "points": ["סכנות: השלטון עלול לנצל לרעה את סמכותו ולפגוע שלא לצורך בזכויות אדם ואזרח / מיעוטים", "השלטון עלול לנצל את סמכותו ולפגוע ביריבים פוליטיים לגיטימיים", "ירידה למחתרת של תנועות שהוצאו מחוץ לחוק ונקיטת אמצעי אלימות מצידן"], "scenarios": [{"text": "ועדת הבחירות פסלה מפלגה שמצעה קרא לבטל את הבחירות ולהעביר את השלטון לאדם אחד לכל החיים.", "quote": "קרא לבטל את הבחירות ולהעביר את השלטון לאדם אחד"}], "confusables": ["israel_7a", "security_democracy", "limiting_government"]}, {"id": "israel_7a", "world": "defense", "page": 20, "name": "דמוקרטיה מתגוננת בישראל – סעיף 7א׳ לחוק יסוד: הכנסת", "definition": "\"רשימת מועמדים לא תשתתף בבחירות לכנסת אם יש במטרותיה או במעשיה, במפורש או במשתמע, אחד מאלה: 1. שלילת קיומה של מדינת ישראל כמדינה יהודית ודמוקרטית. 2. הסתה לגזענות. 3. תמיכה במאבק מזוין של מדינת אויב או ארגון טרור נגד מדינת ישראל.\"", "points": ["שלילת קיום ישראל כמדינה יהודית ודמוקרטית", "הסתה לגזענות", "תמיכה במאבק מזוין של מדינת אויב / ארגון טרור"], "scenarios": [{"text": "מועמד שקרא בנאומיו לגרש מהארץ בני קבוצה מסוימת בגלל מוצאם נפסל מהתמודדות לכנסת.", "quote": "קרא בנאומיו לגרש מהארץ בני קבוצה מסוימת בגלל מוצאם"}], "confusables": ["defensive_democracy", "improper_discrimination", "free_competition"]}, {"id": "security_democracy", "world": "defense", "page": 20, "name": "ביטחון ודמוקרטיה", "definition": "זכות המדינה להגן על עצמה ועל אזרחיה מפני איומים על הביטחון. עם זאת, הצורך לשמור על ביטחון המדינה מתנגש לפעמים עם עקרונות הדמוקרטיה. במצב חירום התנגשות זו הופכת לחמורה ונפוצה יותר. יש מדינות שבהן החוק מתיר פגיעה בזכויות ובדמוקרטיה בעת מלחמה ומצב חירום כדי להגן על ביטחון המדינה.", "points": ["דוגמאות בישראל: תקנות לשעת חירום, מעצר מנהלי"], "scenarios": [{"text": "בזמן מלחמה הוטלה צנזורה על פרסום מיקום נפילות טילים, כדי שהאויב לא ישתמש במידע.", "quote": "כדי שהאויב לא ישתמש במידע"}], "confusables": ["defensive_democracy", "emergency_regulations", "rights_conflict"]}, {"id": "emergency_regulations", "world": "defense", "page": 21, "name": "תקנות לשעת חירום", "definition": "הממשלה מוסמכת להתקין תקנות לשעת חירום לטובת הגנת המדינה, ביטחון הציבור וקיום אספקה ושירותים חיוניים. ייחודן בכך שאף שהן חקיקת משנה, הן יכולות לגבור על הוראות חוק (למעט חוקים חסינים כמו ח״י: כבוד האדם וחירותו, ח״י: חופש העיסוק וח״י: הכנסת). לפי החוק בישראל ניתן להתקין רק כאשר מוכרז מצב חירום במדינה (ע״י הכנסת). בפועל, מאז הקמת המדינה מוכרז בה על ידי הכנסת מצב חירום (ההכרזה מחודשת אחת לשנה).", "points": ["מותקנות ע״י הממשלה", "חקיקת משנה שיכולה לגבור על חוק", "רק כשהכנסת הכריזה מצב חירום (מתחדש כל שנה)"], "scenarios": [{"text": "בעקבות המלחמה התקינה הממשלה תקנה שמאפשרת לסגור בתי ספר באזורי הלחימה ולחייב עובדים חיוניים להגיע לעבודה, למרות שהחוק הרגיל לא מאפשר זאת.", "quote": "למרות שהחוק הרגיל לא מאפשר זאת"}], "confusables": ["administrative_detention", "security_democracy", "separation_of_powers"]}, {"id": "administrative_detention", "world": "defense", "page": 21, "name": "מעצר מנהלי", "definition": "מעצר מניעתי מידי ללא הליך פלילי רגיל כנגד העצור גם בלי שהוא מואשם בביצוע עבירה כלשהי (סמכותו של שר הביטחון להורות עליו). מטרתו למנוע פגיעה בביטחון הציבור או ביטחון המדינה. הליך הנתון לביקורת רבה בשל הפגיעה הקשה בזכויות ולכן חלות עליו הגבלות בחוק (בסמכות שר הביטחון בלבד לבצע מעצר מנהלי לפרק זמן ארוך, תקף לתקופה של 6 חודשים וניתן להארכה).", "points": ["מניעתי – בלי הליך פלילי ובלי כתב אישום", "בסמכות שר הביטחון", "6 חודשים, ניתן להארכה"], "scenarios": [{"text": "צעיר נעצר על סמך מידע מודיעיני שתכנן פיגוע. לא הוגש נגדו כתב אישום, והוא הוחזק במעצר בהוראת שר הביטחון לחצי שנה.", "quote": "לא הוגש נגדו כתב אישום"}], "confusables": ["due_process", "emergency_regulations", "movement"]}]};</script>
+<script>
+'use strict';
+/* ---------- state ---------- */
+const LS='ezrahut-pixel-v1';
+const S=Object.assign({xp:0,streak:0,best:0,stats:{},prog:{},snd:true},(()=>{try{return JSON.parse(localStorage.getItem(LS))||{}}catch(e){return{}}})());
+let cloud=null,cloudT;
+function save(){S.saved=Date.now();try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}
+ if(cloud){clearTimeout(cloudT);cloudT=setTimeout(()=>{cloud.set(JSON.parse(JSON.stringify(S))).catch(()=>{})},1200)}}
+/* cloud sync when running as a claude.ai artifact (private per user) */
+async function initCloud(){try{if(!window.claude||!window.claude.use)return;
+ const [user,db]=await Promise.all([window.claude.use('user'),window.claude.use('db')]);if(!user||!db)return;
+ const id=await user.id();if(!id)return;const ref=db.doc('data/users/'+id+'/progress');
+ const snap=await ref.get();const r=snap.exists?snap.data():null;
+ if(r&&(r.saved||0)>(S.saved||0)){Object.assign(S,JSON.parse(JSON.stringify(r)));try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}if(!R&&D)showMap()}
+ cloud=ref;if(!r||(S.saved||0)>(r.saved||0))save();toast('☁️ ההתקדמות נשמרת בחשבון')}catch(e){}}
+const app=document.getElementById('app');
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const pick=a=>a[Math.random()*a.length|0];
+const $=s=>app.querySelector(s);
+let D,C={},R=null,timer=null;
+
+const WS={elections:{icon:'🗳️',col:'#ff6fa5',mon:'#ff9ccb'},culture:{icon:'🎭',col:'#8f5cff',mon:'#b99bff'},limits:{icon:'⚖️',col:'#ff9f1c',mon:'#ffc15e'},obedience:{icon:'🚨',col:'#ff4d5e',mon:'#ff9a9a'},rights:{icon:'✊',col:'#2ec27e',mon:'#86e8b2'},defense:{icon:'🛡️',col:'#3a86ff',mon:'#8fb8ff'}};
+const STAGES=[
+ {k:'learn',ic:'📖',n:'לימוד',d:'מושגים חדשים בקבוצות של 3: הסבר, דוגמה, השוואה ותרגול'},
+ {k:'flash',ic:'🃏',n:'קלפים',d:'הפוך קלף – ידעתי / לא ידעתי'},
+ {k:'id',ic:'👾',n:'זיהוי',d:'סיטואציה ← בחר מושג. פגע במפלצת!'},
+ {k:'build',ic:'🧱',n:'בונה תשובה',d:'הצג ← הסבר ← צטט ← קשר'},
+ {k:'boss',ic:'👑',n:'בוס',d:'10 שאלות מעורבות, טיימר, 3 לבבות'}];
+const TITLES=['טירון/ית','מצביע/ה','פעיל/ה','חבר/ת מועצה','ח״כ','שר/ה','יו״ר הכנסת','שופט/ת עליון','נשיא/ה','אגדה דמוקרטית'];
+const BOSS_T=20;
+
+/* ---------- pixel sprites ---------- */
+function sprite(rows,pal,px,cls){const h=rows.length,w=rows[0].length;let r='';rows.forEach((row,y)=>{let x=0;while(x<w){const ch=row[x];if(ch==='.'){x++;continue}let e=x;while(e<w&&row[e]===ch)e++;r+=`<rect x="${x}" y="${y}" width="${e-x}" height="1" fill="${pal[ch]}"/>`;x=e}});return `<svg class="${cls||''}" viewBox="0 0 ${w} ${h}" width="${w*px}" height="${h*px}" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`}
+const MON=["....kkkk....","..kkggggkk..",".kggggggllk.","kggwwggwwggk","kggwkggwkggk","kggggggggggk","kgggkkkkgggk","kggggrrggggk",".kggggggggk.","..kkkkkkkk.."];
+const CROWN=["..y..yy..y..","..yyyyyyyy.."];
+const HEART=[".rr.rr.","rwrrrrr","rrrrrrr",".rrrrr.","..rrr..","...r..."];
+const STAR=["...y...","..yyy..","yyyyyyy",".yyyyy.","..yyy..",".yy.yy.","yy...yy"];
+const heart=on=>sprite(HEART,{r:on?'#ff4d5e':'#5b5470',w:on?'#fff':'#7a7390'},3);
+const star=on=>sprite(STAR,{y:on?'#ffd23f':'#5b5470'},3);
+const stars=n=>[0,1,2].map(k=>star(k<n)).join(' ');
+const monster=(col,boss)=>sprite(boss?CROWN.concat(MON):MON,{k:'#1d1a2f',g:col,l:'#fff',w:'#fff',r:'#ff4d5e',y:'#ffd23f'},boss?9:7,'mon');
+
+/* ---------- sound ---------- */
+let AC;
+const SFX={ok:[[660,.07],[990,.12]],bad:[[220,.12],[150,.2]],flip:[[520,.05]],hit:[[880,.04],[440,.06]],win:[[523,.1],[659,.1],[784,.1],[1047,.3]],lose:[[392,.15],[330,.15],[262,.3]],lvl:[[784,.08],[988,.08],[1175,.08],[1568,.25]]};
+function sfx(k){if(!S.snd)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();let t=AC.currentTime;for(const [f,d] of SFX[k]){const o=AC.createOscillator(),g=AC.createGain();o.type='square';o.frequency.value=f;g.gain.setValueAtTime(.05,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d);t+=d*.9}}catch(e){}}
+
+/* ---------- helpers ---------- */
+let toastT;
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1800)}
+const lvl=xp=>{let L=1;while(50*L*(L+1)<=xp)L++;return L};
+const ttl=L=>TITLES[Math.min(L,TITLES.length)-1];
+function hud(){const L=lvl(S.xp),a=50*L*(L-1),b=50*L*(L+1),p=Math.round((S.xp-a)/(b-a)*100);
+ return `<div class="hud" id="hud"><span class="lv px">LV${L}</span><span class="ttl">${ttl(L)}</span><div class="xpbar"><i style="width:${p}%"></i></div><span class="px">${S.xp}XP</span><span class="px" title="רצף">🔥${S.streak}</span><button class="icb" id="snd" aria-label="צליל">${S.snd?'🔊':'🔇'}</button></div>`}
+function bindHud(){const b=document.getElementById('snd');if(b)b.onclick=()=>{S.snd=!S.snd;save();b.textContent=S.snd?'🔊':'🔇'}}
+function refreshHud(){const h=document.getElementById('hud');if(h){h.outerHTML=hud();bindHud()}}
+function gain(n){const b=lvl(S.xp);S.xp+=n;const a=lvl(S.xp);if(a>b){setTimeout(()=>{toast(`⬆️ רמה ${a}! ${ttl(a)}`);sfx('lvl')},300)}save()}
+const byWorld=w=>D.concepts.filter(c=>c.world===w).map(c=>c.id);
+const splitW=n=>{const i=n.indexOf(':');return i<0?['',n]:[n.slice(0,i),n.slice(i+1).trim()]};
+const box=id=>S.stats[id]?S.stats[id].b:1;
+const weakFirst=ids=>shuffle(ids).sort((a,b)=>box(a)-box(b));
+/* spaced review: minutes until a concept is due again, by box */
+const INT=[1,5,20,60,360,1440];
+function record(id,ok){const s=S.stats[id]||(S.stats[id]={r:0,w:0,b:1});if(ok){s.r++;s.b=Math.min(s.b+1,5)}else{s.w++;s.b=0}s.t=Date.now();s.due=s.t+INT[s.b]*60000;save()}
+const learned=id=>!!(S.stats[id]&&S.stats[id].L);
+function dueIds(){const n=Date.now();return Object.keys(S.stats).filter(id=>C[id]&&S.stats[id].L&&(S.stats[id].due||0)<=n).sort((a,b)=>(S.stats[a].due||0)-(S.stats[b].due||0))}
+function nextBatch(w){const un=byWorld(w).filter(id=>!learned(id));if(!un.length)return [];if(un.length===4)return un;const b=[un[0]];
+ for(const x of C[un[0]].confusables||[])if(b.length<3&&un.includes(x)&&!b.includes(x))b.push(x);
+ for(const x of un)if(b.length<3&&!b.includes(x))b.push(x);return b}
+function learnStars(w){const ids=byWorld(w),l=ids.filter(learned).length;return l===ids.length?3:l>=ids.length/2?2:l>0?1:0}
+const splitSents=t=>t.replace(/(\D)\.\s+/g,'$1.\n').split('\n').map(s=>s.trim()).filter(Boolean);
+function hl(text,quote){let h=esc(text);for(const part of quote.split(/\.\.\.|…/).map(s=>s.trim()).filter(s=>s.length>2)){const e=esc(part);if(h.includes(e))h=h.replace(e,`<mark>${e}</mark>`)}return h}
+function distractorsPool(id,n,pool){const c=C[id],out=[];const P=pool.filter(x=>x!==id&&C[x]);
+ for(const x of shuffle(P))if((c.confusables||[]).includes(x)&&out.length<n)out.push(x);
+ for(const x of shuffle(P))if(!out.includes(x)&&out.length<n)out.push(x);
+ for(const x of distractors(id,n+3))if(!out.includes(x)&&out.length<n)out.push(x);return out}
+/* fill-in-the-blank on the booklet definition */
+const STOP=new Set(['אשר','כדי','בין','למשל','כאשר','אינו','אינן','אינם','להיות','שלא','הזכות','זכות','לכל','אדם','באמצעות','מאוד','אותם','אותו','לבין','בהם','שלה','שלו','עצמו','רבות','רבים']);
+const cleanTok=t=>t.replace(/^[("'״׳–\-]+|[).,:;"'״–\-]+$/g,'');
+const goodW=w=>/^[א-ת]{4,}$/.test(w)&&!STOP.has(w);
+function buildCloze(id){const c=C[id],nameW=new Set(c.name.split(/\s+/).map(cleanTok));
+ let toks=null,idx=-1;
+ for(const s of splitSents(c.definition).slice(0,3)){const t=s.split(/\s+/);const cand=t.map((x,i)=>i).filter(i=>{const w=cleanTok(t[i]);return goodW(w)&&!nameW.has(w)});
+  if(cand.length){cand.sort((a,b)=>cleanTok(t[b]).length-cleanTok(t[a]).length);idx=pick(cand.slice(0,4));toks=t;break}}
+ if(!toks)return null;
+ const word=cleanTok(toks[idx]);const lo=Math.max(0,idx-12),hi=Math.min(toks.length,idx+13);
+ const shown=toks.slice(lo,hi).map((t,i)=>i+lo===idx?esc(t.replace(word,'@@')).replace('@@','<b class="blank">_____</b>'):esc(t)).join(' ');
+ const pool=[];for(const x of distractors(id,8))for(const t of C[x].definition.split(/\s+/)){const w=cleanTok(t);if(goodW(w)&&w!==word&&!c.definition.includes(w)&&Math.abs(w.length-word.length)<=3&&!pool.includes(w))pool.push(w)}
+ const opts=shuffle([word,...shuffle(pool).slice(0,3)]);
+ return {prompt:`<span class="tag">✍️ השלם/י את ההגדרה של: ${esc(c.name)}</span><div class="scene">${lo>0?'… ':''}${shown}${hi<toks.length?' …':''}</div>`,opts:opts.map(w=>({html:esc(w),ok:w===word}))}}
+function weakIds(){return Object.keys(S.stats).filter(id=>C[id]&&S.stats[id].w>0&&S.stats[id].b<=1).sort((a,b)=>(S.stats[b].w-S.stats[b].r)-(S.stats[a].w-S.stats[a].r))}
+function worldStars(w){const p=S.prog[w]||{};return STAGES.reduce((s,st)=>s+(st.k==='learn'?learnStars(w):(p[st.k]||0)),0)}
+function cut(s,n){if(s.length<=n)return s;const k=s.lastIndexOf(' ',n);return s.slice(0,k>n*.5?k:n)+'…'}
+function firstSent(t){const p=t.split(/\.\s+/);let s=p[0];if(s.length<30&&p[1])s+='. '+p[1];return cut(s.replace(/\.$/,''),150)}
+function keyOf(id){const c=C[id];if(c.points.length>=2&&!/^סכנות/.test(c.points[0]))return c.points.slice(0,2).join('; ');return firstSent(c.definition)}
+function distractors(id,n){const c=C[id],out=[];const tryAdd=x=>{if(out.length<n&&x!==id&&C[x]&&!out.includes(x))out.push(x)};
+ shuffle(c.confusables||[]).forEach(tryAdd);shuffle(byWorld(c.world)).forEach(tryAdd);shuffle(Object.keys(C)).forEach(tryAdd);return out}
+/* snippets of definitions that show where they actually differ */
+function snippets(ids){const defs=ids.map(x=>C[x].definition);
+ return defs.map((d,i)=>{let p=0;defs.forEach((e,j)=>{if(j===i)return;let k=0;while(k<d.length&&d[k]===e[k])k++;p=Math.max(p,k)});
+  let st=0;if(p>20){st=d.lastIndexOf(' ',p-12);if(st<0)st=0}
+  return (st>0?'…':'')+cut(d.slice(st).trim(),150)})}
+function maskName(c){return esc(c.definition).split(esc(c.name)).join('_____')}
+/* 3 candidate sentences from the scenario for the "צטט" step */
+function quoteOpts(sc,id){
+ const norm=s=>s.replace(/[.,:;!?"״“”׳…\-–()]/g,' ').replace(/\s+/g,' ').trim();
+ const qw=norm(sc.quote).split(' ');const qs=new Set(qw);
+ const bad=f=>{const w=norm(f).split(' ');const a=w.filter(x=>qs.has(x)).length;return a/w.length>=.5||a/qw.length>=.5};
+ let fr=sc.text.split(/[.,:;!?"״“”]+/).map(s=>s.trim()).filter(s=>s.split(/\s+/).length>=3&&!bad(s));
+ if(fr.length<2){const big=fr.findIndex(f=>f.split(/\s+/).length>=7);
+  if(big>=0){const w=fr[big].split(/\s+/),m=Math.ceil(w.length/2);fr.splice(big,1,w.slice(0,m).join(' '),w.slice(m).join(' '))}}
+ fr=fr.map(f=>{const w=f.split(/\s+/);return w.length>12?w.slice(0,12).join(' ')+'…':f});
+ for(const x of distractors(id,4)){if(fr.length>=2)break;const q=pick(C[x].scenarios).quote;if(!fr.includes(q))fr.push(q)}
+ return shuffle([{html:esc(sc.quote),ok:true},...shuffle(fr).slice(0,2).map(f=>({html:esc(f),ok:false,why:'המשפט הזה לא מדגים את המושג – חפש/י את המשפט שמראה את ההגדרה בפעולה.'}))])}
+function defHtml(c){return `<div class="def"><div class="dn">${esc(c.name)} <span class="pg">עמ׳ ${c.page}</span></div><p>${esc(c.definition)}</p>${c.points.length?'<ul>'+c.points.map(p=>`<li>${esc(p)}</li>`).join('')+'</ul>':''}${c.mnemonic?`<div class="mn">🔑 ${esc(c.mnemonic)}</div>`:''}</div>`}
+function clearTimer(){if(timer){clearInterval(timer);timer=null}}
+
+/* ---------- boot ---------- */
+initCloud();
+(window.CONCEPTS?Promise.resolve(window.CONCEPTS):fetch('concepts.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()})).then(d=>{D=d;d.concepts.forEach(c=>C[c.id]=c);showMap()}).catch(()=>{
+ app.innerHTML=`<div class="box"><h3>⚠️ לא הצלחתי לטעון את concepts.json</h3><p>המשחק צריך לרוץ דרך שרת מקומי (פתיחה בלחיצה כפולה על הקובץ לא תעבוד).</p><p>פתח/י טרמינל בתיקייה של המשחק והרץ/י:</p><p><code>python3 -m http.server 8000</code></p><p>ואז היכנס/י בדפדפן ל-<code>http://localhost:8000</code></p></div>`});
+
+/* ---------- map ---------- */
+function showMap(){clearTimer();R=null;
+ const xs=[26,72,30,70,28,72],H=D.worlds.length*112+30;
+ const nodes=D.worlds.map((w,i)=>{const nm=splitW(w.name)[1],s=WS[w.id]||{icon:'⭐',col:'#888'};
+  return `<button class="node" style="left:${xs[i]}%;top:${i*112+26}px;--c:${s.col}" data-w="${w.id}"><span class="nn px">${i+1}</span><span class="ic">${s.icon}</span><span class="nm">${esc(nm)}</span><span class="ns px">📖${byWorld(w.id).filter(learned).length}/${byWorld(w.id).length} ★${worldStars(w.id)}</span></button>`}).join('');
+ const pts=xs.slice(0,D.worlds.length).map((x,i)=>`${x},${i*112+66}`).join(' ');
+ const wk=weakIds().length,due=dueIds().length,N=D.concepts.length,nl=D.concepts.filter(c=>learned(c.id)).length,nm=D.concepts.filter(c=>learned(c.id)&&S.stats[c.id].b>=3).length,na=nextAction();
+ app.innerHTML=hud()+`<div class="title">⚔️ אזרחות פיקסל ⚔️</div><div class="subt">${esc(D.meta.title)}</div>
+ <div class="box"><div class="prog"><span>📖 נלמדו</span><div class="bar"><i style="width:${nl/N*100}%"></i></div><b class="px">${nl}/${N}</b></div>
+ <div class="prog"><span>🏆 שולט</span><div class="bar"><i style="width:${nm/N*100}%;background:var(--yel)"></i></div><b class="px">${nm}/${N}</b></div>
+ <button class="btn grn" id="nx" style="margin-top:12px">▶ ${esc(na.txt)}</button>
+ <div class="row"><button class="btn ${due?'':'gray'}" id="due" ${due?'':'disabled'}>⏰ חזרה (${due})</button><button class="btn pink" id="weak">💔 חלשים (${wk})</button></div>
+ <button class="btn gray" id="plan">📅 איך ללמוד עד המבחן</button></div>
+ <div class="map" style="height:${H}px"><div class="cloud" style="left:12%"></div><div class="cloud" style="left:62%;top:30px"></div>
+ <svg class="path" viewBox="0 0 100 ${H}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="#c9a46a" stroke-width="14" vector-effect="non-scaling-stroke"/><polyline points="${pts}" fill="none" stroke="#1d1a2f" stroke-width="3" stroke-dasharray="6 8" vector-effect="non-scaling-stroke"/></svg>${nodes}</div>
+ <button class="btn gray" id="how">📝 איך בונים תשובה במבחן?</button>
+ <div class="small center" style="color:#d9d2ff;margin-top:8px">שיא רצף: ${S.best} 🔥</div>
+ <button class="link" id="reset">איפוס התקדמות</button>`;
+ bindHud();
+ app.querySelectorAll('.node').forEach(b=>b.onclick=()=>{sfx('flip');showWorld(b.dataset.w)});
+ $('#weak').onclick=showWeak;$('#how').onclick=showHow;$('#plan').onclick=showPlan;$('#nx').onclick=()=>na.go();
+ if(due)$('#due').onclick=()=>startRun('practice',null,dueIds().slice(0,12),'⏰ חזרה מרווחת');
+ $('#reset').onclick=e=>{const b=e.currentTarget;if(!b.dataset.c){b.dataset.c=1;b.textContent='בטוח? לחיצה נוספת תמחק הכול';b.style.color='#ff9aa5';return}S.xp=0;S.streak=0;S.best=0;S.stats={};S.prog={};save();showMap()};
+ window.scrollTo(0,0)}
+
+/* the single "what should I do now" button */
+function nextAction(){const due=dueIds();
+ if(due.length>=3)return {txt:`חזרה מרווחת: ${due.length} מושגים מחכים`,go:()=>startRun('practice',null,due.slice(0,12),'⏰ חזרה מרווחת')};
+ for(const w of D.worlds){const ids=byWorld(w.id),nm=splitW(w.name)[1];
+  if(ids.some(id=>!learned(id)))return {txt:`ללמוד מושגים חדשים: ${nm}`,go:()=>startRun('learn',w.id)};
+  if(!((S.prog[w.id]||{}).id))return {txt:`לתרגל זיהוי: ${nm}`,go:()=>startRun('id',w.id)}}
+ if(weakIds().length)return {txt:`תרגול המושגים החלשים (${weakIds().length})`,go:()=>startRun('practice',null,weakIds())};
+ if(due.length)return {txt:`חזרה מרווחת: ${due.length} מושגים`,go:()=>startRun('practice',null,due,'⏰ חזרה מרווחת')};
+ for(const w of D.worlds){const p=S.prog[w.id]||{};if(!p.build)return {txt:`בונה תשובה: ${splitW(w.name)[1]}`,go:()=>startRun('build',w.id)};if((p.boss||0)<3)return {txt:`להביס את הבוס: ${splitW(w.name)[1]}`,go:()=>startRun('boss',w.id)}}
+ return {txt:'תרגול מעורב מכל העולמות',go:()=>startRun('practice',null,weakFirst(Object.keys(C)).slice(0,12),'🎲 תרגול מעורב')}}
+function showPlan(){
+ app.innerHTML=hud()+`<div class="box"><h3>📅 איך ללמוד מושגים בזמן קצר</h3>
+ <p>המשחק בנוי לפי מה שהמחקר על למידה מראה שעובד הכי טוב. הכפתור הירוק <b>"▶ המשך"</b> במפה תמיד בוחר את הצעד הבא, אז אפשר פשוט ללחוץ עליו.</p>
+ <h4>הערב</h4><ol>
+ <li><b>📖 לימוד בקבוצות של 3.</b> כל קבוצה לוקחת כ-5 דקות: הסבר עם דוגמה, השוואה למושגים דומים ומיד תרגול שליפה. ממשיכים עד שעונים נכון על כל מושג.</li>
+ <li><b>⏰ חזרה מרווחת.</b> כשהכפתור מראה מספר, עושים חזרה קצרה. מושג שעונים עליו נכון חוזר אחרי מרווח ארוך יותר (5 דק׳ ← 20 דק׳ ← שעה ← 6 שעות), ומושג שטועים בו חוזר מיד.</li>
+ <li><b>👾 זיהוי ו-🧱 בונה תשובה</b> אחרי שעולם שלם נלמד. זה בדיוק מה שהמבחן דורש.</li>
+ <li><b>לפני השינה:</b> סבב אחד של 💔 החלשים, ואז לישון. שינה אחרי למידה מפחיתה שכחה.</li></ol>
+ <h4>מחר בבוקר</h4><ol><li>⏰ חזרה מרווחת על כל מה שמחכה.</li><li>👑 בוס בכל עולם, כ-2 דקות לעולם.</li><li>💔 סבב אחרון על החלשים.</li></ol>
+ <h4>למה זה עובד</h4><ul>
+ <li><b>שליפה עדיפה על קריאה חוזרת.</b> לנסות להיזכר מחזק את הזיכרון יותר מלקרוא שוב.</li>
+ <li><b>עד שעונים נכון, ואז שוב אחרי הפסקה.</b> השיטה נקראת למידה חוזרת מרווחת (successive relearning).</li>
+ <li><b>להשוות מושגים דומים זה לצד זה</b> מלמד מה מבדיל ביניהם, וזו בדיוק המלכודת במבחן.</li>
+ <li><b>כמה דוגמאות לכל מושג</b> מלמדות לזהות אותו גם בקטע חדש.</li>
+ <li><b>מעט בכל פעם.</b> 3 מושגים בקבוצה ולא 20 בבת אחת.</li></ul></div>
+ <button class="btn grn" id="nx">▶ ${esc(nextAction().txt)}</button><button class="btn gray" id="back">◀ חזרה למפה</button>`;
+ bindHud();$('#back').onclick=showMap;$('#nx').onclick=()=>nextAction().go();window.scrollTo(0,0)}
+
+function showHow(){const a=D.meta.answer_structure;
+ app.innerHTML=hud()+`<div class="box"><h3>📝 מבנה תשובה בארבעה צעדים</h3>${a.map((s,i)=>{const [l,d]=s.split(' – ');return `<p><span class="tag">${i+1}. ${esc(l)}</span> ${esc(d||'')}</p>`}).join('')}
+ <p class="small">בשלב "בונה תשובה" בכל עולם מתרגלים בדיוק את זה: מזהים מושג, בוחרים הגדרה, מצטטים משפט מהקטע ומקשרים בין הציטוט להגדרה.</p></div><button class="btn" id="back">◀ חזרה למפה</button>`;
+ bindHud();$('#back').onclick=showMap}
+
+/* ---------- world ---------- */
+function showWorld(wid){clearTimer();R=null;const w=D.worlds.find(x=>x.id===wid),s=WS[wid],p=S.prog[wid]||{};
+ const ids=byWorld(wid);
+ app.innerHTML=hud()+`<div class="box center" style="background:${s.col};color:#fff"><div style="font-size:34px">${s.icon}</div><h2 style="text-shadow:2px 2px 0 #0006">${esc(w.name)}</h2><div>${monster(s.mon)}</div></div>
+ ${STAGES.map((st,i)=>`<button class="btn stage ${['grn','','pink','blue','red'][i]}" data-k="${st.k}"><span class="si">${st.ic}</span><span>${i+1}. ${st.n}<br><span class="sd">${st.k==='learn'?`נלמדו ${ids.filter(learned).length}/${ids.length} · `:''}${st.d}</span></span><span class="stars">${stars(st.k==='learn'?learnStars(wid):(p[st.k]||0))}</span></button>`).join('')}
+ <div class="box"><b>${ids.length} מושגים בעולם:</b><div class="chips" style="margin-top:8px">${ids.map(id=>{const st=S.stats[id];const cl=!st||!st.L?'n':st.b<=1&&st.w>0?'w':st.b>=3?'g':'';return `<span class="chip ${cl}">${esc(C[id].name)}</span>`}).join('')}</div>
+ <div class="small" style="margin-top:8px">אפור = עוד לא נלמד · ורוד = חלש · ירוק = שולט</div></div>
+ <button class="btn gray" id="back">◀ חזרה למפה</button>`;
+ bindHud();
+ app.querySelectorAll('.stage').forEach(b=>b.onclick=()=>startRun(b.dataset.k,wid));
+ $('#back').onclick=showMap;window.scrollTo(0,0)}
+
+/* ---------- weak ---------- */
+function showWeak(){clearTimer();R=null;const ids=weakIds();
+ app.innerHTML=hud()+`<div class="box"><h3>💔 המושגים החלשים שלי</h3><p class="small">מושגים שטעית בהם ועוד לא ענית עליהם נכון פעמיים ברצף. לחיצה על מושג מציגה את ההגדרה.</p></div>
+ ${ids.length?`<button class="btn pink" id="prac">🎯 תרגל רק אותם (${ids.length})</button>`:'<div class="box center">אין מושגים חלשים כרגע 🎉<br>שחק/י בעולמות והם יופיעו כאן אם תטעה/י.</div>'}
+ <div class="weak">${ids.map(id=>{const s=S.stats[id];return `<details class="box"><summary class="w"><span>${esc(C[id].name)}</span><span class="cnt px"><span class="r">✔${s.r}</span> <span class="e">✘${s.w}</span></span></summary>${defHtml(C[id])}</details>`}).join('')}</div>
+ <button class="btn gray" id="back">◀ חזרה למפה</button>`;
+ bindHud();if(ids.length)$('#prac').onclick=()=>startRun('practice',null,ids);$('#back').onclick=showMap;window.scrollTo(0,0)}
+
+/* ---------- runs ---------- */
+function startRun(kind,wid,ids,label){clearTimer();
+ const pool=ids||byWorld(wid);let q=[],batch=null;
+ if(kind==='learn'){batch=ids||nextBatch(wid);if(!batch.length)batch=weakFirst(byWorld(wid)).slice(0,3);
+  const known=byWorld(wid).filter(x=>learned(x)&&!batch.includes(x));const lp=batch.concat(known);
+  const near=(a,b)=>(C[a].confusables||[]).includes(b)||(C[b].confusables||[]).includes(a);
+  q=batch.map(id=>({t:'intro',id}));
+  const fam=batch.filter(id=>batch.some(o=>o!==id&&near(id,o)));if(fam.length>=2)q.push({t:'compare',ids:fam});
+  q.push({t:'go'});
+  q=q.concat(shuffle(batch).map(id=>({t:'name',id,pool:lp})));
+  q=q.concat(shuffle(batch).map(id=>({t:'id',id,sc:C[id].scenarios[C[id].scenarios.length>1?1:0],pool:lp})));
+  q=q.concat(weakFirst(known).slice(0,3).map(id=>({t:'id',id,sc:pick(C[id].scenarios),pool:lp})));
+  q=q.concat(shuffle(batch).map(id=>({t:pick(['cloze','cloze','def']),id,sc:C[id].scenarios[0],pool:lp})))}
+ if(kind==='flash')q=weakFirst(pool).map(id=>({t:'flash',id}));
+ else if(kind==='id'){const ord=weakFirst(pool);for(let r=0;q.length<10;r++){let any=false;for(const id of ord){const sc=C[id].scenarios[r];if(sc&&q.length<10){q.push({t:'id',id,sc});any=true}}if(!any)break}}
+ else if(kind==='build')q=weakFirst(pool).slice(0,5).map(id=>({t:'build',id,sc:pick(C[id].scenarios)}));
+ else if(kind==='boss'){const ord=weakFirst(pool);for(let i=0;i<10;i++){const id=ord[i%ord.length];q.push({t:pick(['id','id','def','name','quote','cloze']),id,sc:pick(C[id].scenarios)})}q=shuffle(q)}
+ else if(kind==='practice'){q=shuffle(pool).map(id=>({t:'id',id,sc:pick(C[id].scenarios)})).concat(shuffle(pool).map(id=>({t:pick(['def','name','quote','cloze']),id,sc:pick(C[id].scenarios)})))}
+ R={kind,wid,q,i:0,batch,label,ids,hearts:(kind==='flash'||kind==='practice'||kind==='learn')?Infinity:3,xp0:S.xp,missed:new Set(),ok:0,firstTry:new Set(),seen:new Set()};
+ R.hp=R.max=(kind==='id'||kind==='boss')?q.length:0;
+ next()}
+
+function next(){clearTimer();if(R.hearts<=0)return gameOver();if(R.i>=R.q.length)return win();const q=R.q[R.i];
+ if(q.t==='flash')renderFlash(q);else if(q.t==='build')renderBuild(q);else if(q.t==='intro')renderIntro(q);else if(q.t==='compare')renderCompare(q);else if(q.t==='go')renderGo();else renderChoice(q);window.scrollTo(0,0)}
+
+/* ---- learning: teach before testing ---- */
+function renderIntro(q){const c=C[q.id],sc=c.scenarios[0],k=R.batch.indexOf(q.id);
+ const conf=(c.confusables||[]).map(x=>C[x]).filter(Boolean).sort((a,b)=>(b.world===c.world)-(a.world===c.world))[0];
+ app.innerHTML=topBar()+`<div class="box learn"><span class="tag">📖 מושג חדש ${k+1} מתוך ${R.batch.length}</span>
+ <div class="big">${esc(c.name)}</div><div class="small">עמ׳ ${c.page} בחוברת</div>
+ <h4>📘 ההגדרה, חלק אחרי חלק</h4><ol class="pieces">${splitSents(c.definition).map(x=>`<li>${esc(x)}</li>`).join('')}</ol>
+ ${c.points.length?`<h4>🔑 נקודות מפתח</h4><ul>${c.points.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}
+ ${c.mnemonic?`<div class="mn">🧠 קוד לזכירה: ${esc(c.mnemonic)}</div>`:''}</div>
+ <div class="box"><span class="tag">🎬 דוגמה</span><div class="scene">${hl(sc.text,sc.quote)}</div>
+ <details class="why2"><summary>💭 לפני שפותחים: למה זו דוגמה ל"${esc(c.name)}"? נסה/י להסביר לעצמך</summary><p>במשפט "${esc(sc.quote)}" רואים את ${esc(c.name)}: ${esc(keyOf(q.id))}.</p></details></div>
+ ${conf?`<div class="box warn">⚠️ <b>לא להתבלבל עם "${esc(conf.name)}"</b>: ${esc(firstSent(conf.definition))}</div>`:''}
+ <button class="btn grn" id="go">הבנתי – הבא ◀</button>`;
+ bindTop();$('#go').onclick=()=>{sfx('flip');R.i++;next()}}
+function renderCompare(q){
+ app.innerHTML=topBar()+`<div class="box"><span class="tag">🔍 השוואה</span><h3>מושגים דומים: מה ההבדל?</h3><p class="small">המושגים האלה דומים ונוטים להתבלבל ביניהם. שים/י לב מה מבדיל כל אחד מהאחרים.</p></div>
+ ${q.ids.map((id,i)=>{const c=C[id],sc=c.scenarios[0];return `<div class="box cmp" style="--c:${['#ff6fa5','#3a86ff','#2ec27e','#ff9f1c'][i%4]}"><div class="cmph">${esc(c.name)}</div><p><b>בקצרה:</b> ${esc(keyOf(id))}</p><p><b>דוגמה:</b> "${esc(sc.quote)}"</p></div>`}).join('')}
+ <button class="btn grn" id="go">הבנתי את ההבדל ◀</button>`;
+ bindTop();$('#go').onclick=()=>{sfx('flip');R.i++;next()}}
+function renderGo(){
+ app.innerHTML=topBar()+`<div class="box center"><div style="font-size:40px">🧠</div><h3>עכשיו מנסים להיזכר</h3><p>לשלוף מהזיכרון מקבע אותו הרבה יותר מקריאה חוזרת. מותר לטעות: מושג שטעית בו יחזור עוד מעט, עד שתענה/י עליו נכון.</p></div><button class="btn grn" id="go">יאללה ◀</button>`;
+ bindTop();$('#go').onclick=()=>{R.i++;next()}}
+
+function runTitle(){if(R.label)return R.label;if(R.kind==='practice')return '🎯 תרגול מושגים חלשים';const st=STAGES.find(s=>s.k===R.kind);return `${st.ic} ${st.n} · ${esc(splitW(D.worlds.find(w=>w.id===R.wid).name)[1])}`}
+function topBar(){const p=Math.round(R.i/R.q.length*100);
+ const h=R.hearts===Infinity?'<span class="px" style="font-size:12px">∞</span>'+heart(true):[0,1,2].map(k=>heart(k<R.hearts)).join('');
+ return `<div class="top"><button class="x" id="quit" aria-label="יציאה">✕</button><div class="bar"><i style="width:${p}%"></i></div><div class="hearts" id="hearts">${h}</div></div><div class="sub"><span>${runTitle()}</span><span class="px">🔥${S.streak}</span></div>`}
+function arena(){if(R.kind!=='id'&&R.kind!=='boss')return '';const boss=R.kind==='boss';const col=(WS[R.wid]||{}).mon||'#7be0a8';
+ return `<div class="arena" id="arena">${monster(col,boss)}<div class="hp"><i id="hpb" style="width:${R.hp/R.max*100}%"></i></div></div>`}
+function bindTop(){$('#quit').onclick=()=>{clearTimer();R.kind==='practice'?showWeak():showWorld(R.wid)}}
+function setHearts(){const h=document.getElementById('hearts');if(h&&R.hearts!==Infinity)h.innerHTML=[0,1,2].map(k=>heart(k<R.hearts)).join('')}
+
+function onRight(id,silentRecord){if(!silentRecord)record(id,true);S.streak++;S.best=Math.max(S.best,S.streak);const x=10+Math.min(S.streak,10);gain(x);R.ok++;sfx('ok');return x}
+function onWrong(id){record(id,false);S.streak=0;save();R.missed.add(id);sfx('bad');
+ if(R.hearts!==Infinity){R.hearts--;setHearts();const h=document.getElementById('hearts');if(h){h.classList.remove('shake');void h.offsetWidth;h.classList.add('shake')}}}
+function hitMonster(){if(!R.max)return;R.hp=Math.max(0,R.hp-1);const a=document.getElementById('arena');if(!a)return;
+ document.getElementById('hpb').style.width=(R.hp/R.max*100)+'%';a.classList.remove('hit');void a.offsetWidth;a.classList.add(R.hp===0?'dead':'hit');
+ const d=document.createElement('div');d.className='dmg px';d.textContent='-1';a.appendChild(d);setTimeout(()=>sfx('hit'),120)}
+
+/* ---- choice questions ---- */
+function buildChoice(q){const c=C[q.id];
+ const dis=n=>q.pool?distractorsPool(q.id,n,q.pool):distractors(q.id,n);
+ if(q.t==='cloze'){const z=buildCloze(q.id);if(z)return z;q.t='def'}
+ if(q.t==='id'){const ids=shuffle([q.id,...dis(3)]);
+  return {prompt:`<span class="tag">🎬 איזה מושג מתאים לסיטואציה?</span><div class="scene">${esc(q.sc.text)}</div>`,opts:ids.map(x=>({html:esc(C[x].name),ok:x===q.id,id:x}))}}
+ if(q.t==='name'){const ids=shuffle([q.id,...dis(3)]);
+  return {prompt:`<span class="tag">📖 איזה מושג מוגדר כך?</span><div class="prompt-def">${maskName(c)}</div>`,opts:ids.map(x=>({html:esc(C[x].name),ok:x===q.id,id:x}))}}
+ if(q.t==='def'){const ids=shuffle([q.id,...dis(3)]);const sn=snippets(ids);
+  return {prompt:`<span class="tag">🧠 מה ההגדרה?</span><div class="scene">${esc(c.name)}</div>`,opts:ids.map((x,k)=>({html:esc(sn[k]),ok:x===q.id,id:x}))}}
+ if(q.t==='quote')return {prompt:`<span class="tag">💬 איזה משפט מדגים את: ${esc(c.name)}?</span><div class="scene">${esc(q.sc.text)}</div>`,opts:quoteOpts(q.sc,q.id)};
+}
+function renderChoice(q){const b=q.b||(q.b=buildChoice(q));const boss=R.kind==='boss';
+ app.innerHTML=topBar()+arena()+`<div class="box">${b.prompt}${boss?'<div class="timer" id="tm"><i style="width:100%"></i></div>':''}</div><div class="opts">${b.opts.map((o,k)=>`<button class="opt" data-k="${k}">${o.html}</button>`).join('')}</div><div id="fb"></div>`;
+ bindTop();
+ const btns=[...app.querySelectorAll('.opt')];
+ const answer=k=>{clearTimer();btns.forEach((x,j)=>{x.disabled=true;if(b.opts[j].ok)x.classList.add('ok')});
+  const o=k>=0?b.opts[k]:null,ok=!!(o&&o.ok);let extra='';
+  if(o&&!ok){btns[k].classList.add('bad');if(o.id&&C[o.id])extra=`<div class="why">מה שבחרת – <b>${esc(C[o.id].name)}</b>: ${esc(firstSent(C[o.id].definition))}</div>`;else if(o.why)extra=`<div class="why">${esc(o.why)}</div>`}
+  if(k<0)extra='<div class="why">⏰ נגמר הזמן!</div>';
+  let x=0;if(ok){x=onRight(q.id);hitMonster()}else{onWrong(q.id);
+   const copy={t:q.t,id:q.id,sc:q.sc};copy.pool=q.pool;if(R.kind==='boss')R.q.push(copy);else R.q.splice(Math.min(R.i+(R.kind==='learn'?2:3),R.q.length),0,copy)}
+  refreshTop();
+  showFb(ok,q.id,extra,x)};
+ btns.forEach((x,k)=>x.onclick=()=>answer(k));
+ if(boss){let left=BOSS_T*10;const tm=document.getElementById('tm'),bar=tm.firstChild;
+  timer=setInterval(()=>{left--;bar.style.width=(left/(BOSS_T*10)*100)+'%';if(left<=50)tm.classList.add('low');if(left<=0)answer(-1)},100)}}
+function refreshTop(){const s=app.querySelector('.sub .px');if(s)s.textContent='🔥'+S.streak}
+function showFb(ok,id,extra,x){const c=C[id];const fb=document.getElementById('fb');
+ fb.innerHTML=`<div class="fb ${ok?'good':'bad'}"><div class="fbh">${ok?`✔ נכון! <span class="px">+${x}XP</span>`:`✘ לא נכון. התשובה: ${esc(c.name)}`}</div>${extra}${ok?`<details><summary>הצג הגדרה</summary>${defHtml(c)}</details>`:defHtml(c)}<button class="btn" id="go">המשך ◀</button></div>`;
+ const go=document.getElementById('go');go.onclick=()=>{R.i++;next()};
+ setTimeout(()=>fb.scrollIntoView({behavior:'smooth',block:'nearest'}),50)}
+
+/* ---- flash cards ---- */
+function renderFlash(q){const c=C[q.id];
+ app.innerHTML=topBar()+`<div class="card" id="card"><div class="small center">${esc(splitW(D.worlds.find(w=>w.id===c.world).name)[1])} · עמ׳ ${c.page}</div><div class="big" style="margin-top:20px">${esc(c.name)}</div><div class="hint">👆 נסה/י להיזכר בהגדרה ואז לחץ/י להפוך</div></div><div id="fbtns"></div>`;
+ bindTop();const card=$('#card');
+ card.onclick=()=>{if(card.dataset.f)return;card.dataset.f=1;sfx('flip');card.classList.add('flip');
+  setTimeout(()=>{card.classList.add('back');card.innerHTML=defHtml(c);card.classList.remove('flip');
+   $('#fbtns').innerHTML=`<div class="row"><button class="btn red" id="no">✘ לא ידעתי</button><button class="btn grn" id="yes">✔ ידעתי</button></div>`;
+   $('#yes').onclick=()=>{record(q.id,true);if(!R.seen.has(q.id))R.firstTry.add(q.id);R.seen.add(q.id);S.streak++;S.best=Math.max(S.best,S.streak);gain(5);sfx('ok');R.i++;next()};
+   $('#no').onclick=()=>{record(q.id,false);R.seen.add(q.id);R.missed.add(q.id);S.streak=0;save();sfx('bad');
+    if((q.rep||0)<2)R.q.splice(Math.min(R.i+3,R.q.length),0,{t:'flash',id:q.id,rep:(q.rep||0)+1});R.i++;next()}},150)}}
+
+/* ---- answer builder ---- */
+const LABELS=()=>D.meta.answer_structure.map(s=>s.split(' – ')[0]);
+function renderBuild(q){const c=C[q.id];q.step=q.step||0;const L=LABELS();
+ if(!q.parts){const other=distractors(q.id,1)[0];const qt=`"${esc(q.sc.quote)}"`;
+  q.parts=[esc(c.name),esc(cut(c.definition,110)),qt,`במשפט ${qt} רואים את ${esc(c.name)}: ${esc(keyOf(q.id))}`];
+  const dids=shuffle([q.id,...distractors(q.id,2)]),sn=snippets(dids);
+  q.opts=[
+   shuffle([q.id,...distractors(q.id,3)]).map(x=>({html:esc(C[x].name),ok:x===q.id,id:x})),
+   dids.map((x,k)=>({html:esc(sn[k]),ok:x===q.id,why:x===q.id?'':`זו ההגדרה של "${C[x].name}".`})),
+   quoteOpts(q.sc,q.id),
+   shuffle([{html:q.parts[3],ok:true},
+    {html:`במשפט ${qt} מתואר מה שקרה בסיפור, ולכן זה ${esc(c.name)}.`,ok:false,why:'זה רק חוזר על הסיפור. קשר טוב מחבר בין הציטוט לבין ההגדרה.'},
+    {html:`במשפט ${qt} רואים את ${esc(c.name)}: ${esc(keyOf(other))}`,ok:false,why:`ההסבר הזה שייך למושג אחר: "${C[other].name}".`}])];
+  q.order=shuffle([0,1,2,3]);q.ord=0}
+ const hints=['איזה מושג מודגם בסיטואציה?','בחר/י את ההגדרה של המושג','בחר/י את המשפט מהסיטואציה שמדגים את המושג','בחר/י משפט קישור שמחבר ציטוט ↔ הגדרה','עכשיו סדר/י את 4 החלקים לפי סדר התשובה'];
+ const frame=`<div class="frame">${L.map((l,k)=>{const done=q.step>4?true:(q.step===4?k<q.ord:k<q.step);const on=q.step<4?k===q.step:(q.step===4&&k===q.ord);
+  return `<div class="slot ${done?'done':''} ${on?'on':''}"><b>${k+1}. ${esc(l)}</b><span class="${done?'':'st'}">${done?q.parts[k]:'…'}</span></div>`}).join('')}</div>`;
+ let body='';
+ if(q.step<4)body=`<div class="opts">${q.opts[q.step].map((o,k)=>`<button class="opt" data-k="${k}">${o.html}</button>`).join('')}</div><div id="why"></div>`;
+ else if(q.step===4)body=`<div class="opts blocks">${q.order.map(k=>`<button class="opt" data-b="${k}" ${k<q.ord?'disabled style="opacity:.35"':''}>${q.parts[k]}</button>`).join('')}</div>`;
+ else body=`<div class="box model"><h3>✅ תשובה מלאה</h3>${L.map((l,k)=>`<p><span class="lab">${esc(l)}</span>${k===1?esc(c.definition):q.parts[k]}</p>`).join('')}${c.mnemonic?`<div class="mn">🔑 ${esc(c.mnemonic)}</div>`:''}<button class="btn" id="go">המשך ◀</button></div>`;
+ app.innerHTML=topBar()+`<div class="box"><span class="tag">🎬 סיטואציה</span><div class="scene">${esc(q.sc.text)}</div></div><div class="sub" style="margin-top:4px"><span>👉 ${hints[Math.min(q.step,4)]}</span></div>${frame}${body}`;
+ bindTop();
+ if(q.step<4)app.querySelectorAll('.opt').forEach(btn=>btn.onclick=()=>{const o=q.opts[q.step][+btn.dataset.k];
+  if(o.ok){sfx('ok');q.step++;if(q.step===4&&!q.err){}renderBuild(q)}
+  else{btn.disabled=true;btn.classList.add('bad');if(!q.err){q.err=true}onWrong(q.id);
+   document.getElementById('why').innerHTML=o.why?`<div class="fb bad"><div class="why">${esc(o.why)}</div></div>`:'';
+   if(R.hearts<=0){app.querySelectorAll('.opt').forEach(b=>b.disabled=true);const run=R;setTimeout(()=>{if(R===run)gameOver()},700)}}});
+ else if(q.step===4)app.querySelectorAll('[data-b]').forEach(btn=>btn.onclick=()=>{const k=+btn.dataset.b;
+  if(k===q.ord){sfx('flip');q.ord++;if(q.ord===4){q.step=5;if(!q.err){const x=onRight(q.id);toast(`✔ תשובה מושלמת! +${x}XP`)}else{sfx('ok')}}renderBuild(q)}
+  else{btn.classList.remove('shake');void btn.offsetWidth;btn.classList.add('shake');toast(`רמז: עכשיו "${L[q.ord]}"`)}});
+ else $('#go').onclick=()=>{R.i++;next()}}
+
+/* ---- end screens ---- */
+function win(){clearTimer();const k=R.kind;let st=3,bonus=0;
+ if(k==='flash'){const n=new Set(R.q.map(q=>q.id)).size;const f=R.firstTry.size/n;st=f>=.9?3:f>=.6?2:1;bonus=20}
+ else if(k==='practice'){st=0;bonus=15}
+ else if(k==='learn'){bonus=15;for(const id of R.batch){const s=S.stats[id]||(S.stats[id]={r:0,w:0,b:1,due:0});s.L=1;if(!s.due||s.due>Date.now()+INT[1]*60000)s.due=Date.now()+INT[1]*60000}st=learnStars(R.wid);save()}
+ else{st=Math.max(1,R.hearts);bonus=k==='boss'?50:20}
+ gain(bonus);
+ if(R.wid&&k!=='practice'&&k!=='learn'){const p=S.prog[R.wid]||(S.prog[R.wid]={});p[k]=Math.max(p[k]||0,st);save()}
+ sfx('win');
+ const missed=[...R.missed];const still=k==='practice'?weakIds().length:0;
+ app.innerHTML=hud()+`<div class="box center"><h2>${k==='boss'?'👑 הבוס הובס!':k==='practice'?'🎯 סיימת תרגול!':k==='learn'?(R.batch.length===1?'🎓 למדת מושג חדש!':'🎓 למדת '+R.batch.length+' מושגים!'):'🎉 שלב הושלם!'}</h2>
+ ${k==='learn'?`<div class="chips" style="justify-content:center;margin:8px 0">${R.batch.map(id=>`<span class="chip g">${esc(C[id].name)}</span>`).join('')}</div><p class="small">בעולם הזה למדת ${byWorld(R.wid).filter(learned).length} מתוך ${byWorld(R.wid).length}. המושגים יחזרו בחזרה המרווחת (⏰) בעוד כמה דקות.</p>`:''}
+ ${st?`<div style="margin:10px 0">${stars(st).replace(/width="21" height="21"/g,'width="36" height="36"')}</div>`:''}
+ <div class="px" style="font-size:12px;margin:10px 0">+${S.xp-R.xp0} XP</div>
+ ${k==='practice'?`<p>נשארו ${still} מושגים חלשים.</p>`:''}
+ ${missed.length?`<p><b>כדאי לחזור על:</b></p><div class="chips" style="justify-content:center">${missed.map(id=>`<span class="chip w">${esc(C[id].name)}</span>`).join('')}</div>`:'<p>בלי אף טעות! 💪</p>'}</div>
+ ${k==='learn'&&nextBatch(R.wid).length?'<button class="btn grn" id="nb">📖 לקבוצה הבאה</button>':''}${k==='learn'&&!nextBatch(R.wid).length?'<button class="btn grn" id="nid">👾 סיימת ללמוד את העולם! לשלב הזיהוי</button>':''}<button class="btn ${k==='learn'?'gray':'grn'}" id="again">🔁 שוב</button><button class="btn blue" id="nx">⭐ המשך ללמוד (הצעד הבא)</button>${k==='practice'?'<button class="btn pink" id="wk">💔 לרשימת החלשים</button>':'<button class="btn" id="world">◀ חזרה לעולם</button>'}<button class="btn gray" id="map">🗺️ מפה</button>`;
+ bindHud();endBinds()}
+function gameOver(){clearTimer();sfx('lose');const missed=[...R.missed];
+ app.innerHTML=hud()+`<div class="box center"><h2>💔 נגמרו הלבבות</h2><div>${monster((WS[R.wid]||{}).mon||'#aaa',R.kind==='boss')}</div><p>לא נורא – המושגים שטעית בהם יחזרו מוקדם יותר בפעם הבאה.</p>
+ <div class="chips" style="justify-content:center">${missed.map(id=>`<span class="chip w">${esc(C[id].name)}</span>`).join('')}</div></div>
+ ${missed.map(id=>`<details class="box"><summary>${esc(C[id].name)}</summary>${defHtml(C[id])}</details>`).join('')}
+ <button class="btn grn" id="again">🔁 נסה/י שוב</button><button class="btn blue" id="nx">⭐ המשך ללמוד (הצעד הבא)</button><button class="btn" id="world">◀ חזרה לעולם</button><button class="btn gray" id="map">🗺️ מפה</button>`;
+ bindHud();endBinds()}
+function endBinds(){const k=R.kind,w=R.wid,ids=R.ids,label=R.label,batch=R.batch;
+ $('#again').onclick=()=>k==='practice'?(label?startRun('practice',null,ids,label):weakIds().length?startRun('practice',null,weakIds()):showWeak()):k==='learn'?startRun('learn',w,batch):startRun(k,w);
+ const nb=$('#nb');if(nb)nb.onclick=()=>startRun('learn',w);const ni=$('#nid');if(ni)ni.onclick=()=>startRun('id',w);
+ const nx=$('#nx');if(nx)nx.onclick=()=>nextAction().go();
+ const wb=$('#world');if(wb)wb.onclick=()=>showWorld(w);const wk=$('#wk');if(wk)wk.onclick=showWeak;$('#map').onclick=showMap;window.scrollTo(0,0)}
+</script>
+</body>
+</html>

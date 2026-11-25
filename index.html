@@ -258,7 +258,7 @@ function clearTimer(){if(timer){clearInterval(timer);timer=null}}
 
 /* ---------- boot ---------- */
 initCloud();
-fetch('concepts.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(d=>{D=d;d.concepts.forEach(c=>C[c.id]=c);showMap()}).catch(()=>{
+(window.CONCEPTS?Promise.resolve(window.CONCEPTS):fetch('concepts.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()})).then(d=>{D=d;d.concepts.forEach(c=>C[c.id]=c);showMap()}).catch(()=>{
  app.innerHTML=`<div class="box"><h3>⚠️ לא הצלחתי לטעון את concepts.json</h3><p>המשחק צריך לרוץ דרך שרת מקומי (פתיחה בלחיצה כפולה על הקובץ לא תעבוד).</p><p>פתח/י טרמינל בתיקייה של המשחק והרץ/י:</p><p><code>python3 -m http.server 8000</code></p><p>ואז היכנס/י בדפדפן ל-<code>http://localhost:8000</code></p></div>`});
 
 /* ---------- map ---------- */

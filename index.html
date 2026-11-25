@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2b2250">
+<title>אזרחות פיקסל</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rubik:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1d1a2f;--cream:#fff8e7;--sky:#6ecbff;--grass:#7bd85a;--yel:#ffd23f;--pink:#ff6fa5;--pur:#8f5cff;--org:#ff9f1c;--red:#ff4d5e;--grn:#2ec27e;--blue:#3a86ff;--bg:#2b2250}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Rubik',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+body{min-height:100vh;background-color:var(--bg);background-image:radial-gradient(#ffffff22 1px,transparent 1px),radial-gradient(#ffffff14 1px,transparent 1px);background-size:24px 24px,40px 40px;background-position:0 0,12px 20px}
+#app{max-width:480px;margin:0 auto;padding:12px 16px 48px;min-height:100vh}
+.px{font-family:'Press Start 2P','Rubik',monospace;letter-spacing:0}
+svg{image-rendering:pixelated;display:inline-block;vertical-align:middle}
+h1,h2,h3{margin:.2em 0}
+.box{background:var(--cream);box-shadow:0 0 0 4px var(--ink),6px 6px 0 4px #0006;margin:16px 4px;padding:12px 14px;line-height:1.55}
+.center{text-align:center}
+.btn{font:inherit;font-weight:800;font-size:16px;border:0;background:var(--yel);color:var(--ink);padding:12px 14px;margin:8px 0;width:100%;cursor:pointer;box-shadow:0 0 0 3px var(--ink),inset -4px -4px 0 #0003,inset 4px 4px 0 #fff8;text-align:center}
+.btn:active{transform:translate(2px,2px)}
+.btn.pink{background:var(--pink)}.btn.grn{background:var(--grn);color:#fff}.btn.red{background:var(--red);color:#fff}.btn.blue{background:var(--blue);color:#fff}.btn.gray{background:#c9c3dd}
+.btn:disabled{opacity:.5}
+.row{display:flex;gap:10px}.row>*{flex:1}
+/* HUD */
+.hud{display:flex;align-items:center;gap:8px;color:#fff;font-size:11px;margin:4px 0 8px}
+.hud .lv{background:var(--pur);padding:6px 6px 5px;box-shadow:0 0 0 2px var(--ink)}
+.xpbar{flex:1;height:14px;background:#0005;box-shadow:0 0 0 2px var(--ink);position:relative}
+.xpbar i{display:block;height:100%;background:var(--yel);box-shadow:inset 0 -3px 0 #0003}
+.hud .ttl{font-size:12px;font-family:'Rubik';font-weight:600;opacity:.9}
+.icb{background:none;border:0;font-size:18px;cursor:pointer;padding:2px}
+/* map */
+.title{color:#fff;text-align:center;margin:8px 0 2px;font-size:28px;font-weight:800;text-shadow:3px 3px 0 var(--pink),5px 5px 0 var(--ink)}
+.subt{color:#d9d2ff;text-align:center;font-size:13px;margin-bottom:8px}
+.map{position:relative;margin:12px 0;background:linear-gradient(#6ecbff 0 18%,#7bd85a 18%);box-shadow:0 0 0 4px var(--ink),6px 6px 0 4px #0006;overflow:hidden}
+.map:before{content:"";position:absolute;inset:0;background-image:linear-gradient(90deg,#0000000d 50%,transparent 50%),linear-gradient(#0000000d 50%,transparent 50%);background-size:16px 16px}
+.map .cloud{position:absolute;top:14px;width:48px;height:12px;background:#fff;box-shadow:12px -8px 0 #fff,24px 0 0 #fff}
+.map svg.path{position:absolute;inset:0;width:100%;height:100%}
+.node{position:absolute;transform:translateX(-50%);width:150px;border:0;background:var(--c);color:#fff;font:inherit;padding:8px 6px 6px;cursor:pointer;box-shadow:0 0 0 3px var(--ink),inset -4px -4px 0 #0003,inset 4px 4px 0 #fff5;text-align:center;line-height:1.25}
+.node:active{transform:translateX(-50%) translate(2px,2px)}
+.node .ic{font-size:24px;display:block}
+.node .nn{position:absolute;top:-10px;right:-10px;background:var(--yel);color:var(--ink);font-size:10px;padding:4px 5px;box-shadow:0 0 0 2px var(--ink)}
+.node .nm{display:block;font-weight:800;font-size:13px;text-shadow:1px 1px 0 #0006}
+.node .ns{display:block;font-size:9px;margin-top:4px;color:var(--yel);text-shadow:1px 1px 0 #0008}
+/* world */
+.stage{display:flex;align-items:center;gap:12px;text-align:right}
+.stage .si{font-size:30px}
+.stage .sd{font-weight:400;font-size:13px;opacity:.8}
+.stage .stars{margin-inline-start:auto;white-space:nowrap}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;padding:3px 7px;background:#fff;box-shadow:0 0 0 2px var(--ink)}
+.chip.w{background:#ffd0d5}.chip.g{background:#c8f5d9}
+/* run */
+.top{display:flex;align-items:center;gap:10px;margin-top:4px}
+.x{background:var(--cream);border:0;font-weight:800;width:34px;height:34px;box-shadow:0 0 0 3px var(--ink);cursor:pointer;font-size:16px}
+.bar{flex:1;height:16px;background:#0005;box-shadow:0 0 0 3px var(--ink)}
+.bar i{display:block;height:100%;background:var(--grn);box-shadow:inset 0 -4px 0 #0003;transition:width .3s}
+.hearts{display:flex;gap:3px;color:#fff}
+.sub{display:flex;justify-content:space-between;color:#fff;font-size:12px;margin:10px 2px 0;align-items:center}
+.sub .px{font-size:10px;color:var(--yel)}
+.arena{position:relative;text-align:center;margin:14px 0 4px;min-height:110px}
+.arena .mon{animation:bob 1.2s steps(2) infinite}
+.arena.hit .mon{animation:hit .4s steps(4)}
+.arena.dead .mon{animation:die .6s steps(6) forwards}
+.hp{width:60%;margin:6px auto 0;height:12px;background:#0005;box-shadow:0 0 0 3px var(--ink)}
+.hp i{display:block;height:100%;background:var(--red);transition:width .3s}
+.dmg{position:absolute;left:50%;top:20px;color:var(--yel);font-size:16px;text-shadow:2px 2px 0 var(--ink);animation:up .8s forwards;pointer-events:none}
+@keyframes bob{50%{transform:translateY(-4px)}}
+@keyframes hit{0%,50%{filter:brightness(3)}25%,75%{transform:translateX(-6px)}100%{transform:none}}
+@keyframes die{to{transform:scale(1.4) translateY(10px);opacity:0}}
+@keyframes up{to{transform:translateY(-40px);opacity:0}}
+@keyframes shake{25%{transform:translateX(6px)}75%{transform:translateX(-6px)}}
+.shake{animation:shake .25s 2}
+.tag{display:inline-block;background:var(--ink);color:var(--yel);font-size:12px;padding:3px 8px;margin-bottom:8px}
+.scene{font-size:17px;font-weight:600}
+.prompt-def{font-size:15px}
+.opts{display:flex;flex-direction:column;gap:12px;margin:14px 4px}
+.opt{font:inherit;font-size:15px;text-align:right;background:#fff;color:var(--ink);border:0;padding:11px 12px;cursor:pointer;box-shadow:0 0 0 3px var(--ink),inset -3px -3px 0 #0002;line-height:1.45}
+.opt:active{transform:translate(2px,2px)}
+.opt.ok{background:#8ff0b5}.opt.bad{background:#ff9aa5;text-decoration:line-through}
+.opt:disabled{cursor:default;color:var(--ink)}
+.timer{height:8px;background:#0005;margin:8px 4px 0;box-shadow:0 0 0 2px var(--ink)}
+.timer i{display:block;height:100%;background:var(--yel)}
+.timer.low i{background:var(--red)}
+.fb{margin:16px 4px;padding:12px 14px;box-shadow:0 0 0 4px var(--ink);line-height:1.55}
+.fb.good{background:#d4f8e2}.fb.bad{background:#ffe0e3}
+.fbh{font-weight:800;font-size:17px;margin-bottom:6px}
+.fbh .px{font-size:10px;color:var(--grn)}
+.def .dn{font-weight:800}
+.def p{margin:6px 0}
+.def ul{margin:4px 0;padding-inline-start:20px}
+.pg{font-size:11px;opacity:.6;font-weight:400}
+.mn{background:var(--yel);padding:4px 8px;margin-top:6px;font-weight:600;box-shadow:0 0 0 2px var(--ink)}
+.why{font-size:14px;background:#fff;padding:6px 8px;margin:6px 0;box-shadow:0 0 0 2px #0002}
+details summary{cursor:pointer;font-weight:600}
+/* flash card */
+.card{min-height:300px;background:#fff;margin:18px 4px;padding:18px 16px;box-shadow:0 0 0 4px var(--ink),6px 6px 0 4px #0006;cursor:pointer;display:flex;flex-direction:column;justify-content:center;transition:transform .15s steps(3)}
+.card.flip{transform:scaleX(0)}
+.card .big{font-size:26px;font-weight:800;text-align:center;line-height:1.3}
+.card .hint{text-align:center;opacity:.55;font-size:13px;margin-top:18px}
+.card.back{cursor:default;justify-content:flex-start;background:var(--cream)}
+/* builder */
+.frame{display:grid;gap:8px;margin:14px 4px}
+.slot{display:flex;gap:8px;align-items:flex-start;background:#ffffff22;color:#fff;padding:7px 8px;box-shadow:0 0 0 2px #ffffff55;font-size:14px;line-height:1.4}
+.slot b{flex:0 0 auto;background:#fff3;padding:1px 6px}
+.slot.on{box-shadow:0 0 0 3px var(--yel);background:#ffd23f33}
+.slot.done{background:var(--cream);color:var(--ink);box-shadow:0 0 0 3px var(--ink)}
+.slot.done b{background:var(--grn);color:#fff}
+.slot .st{opacity:.7}
+.blocks .opt{position:relative}
+.model .lab{display:inline-block;background:var(--pur);color:#fff;font-weight:800;padding:0 6px;margin-inline-end:6px}
+.model p{margin:6px 0}
+/* misc */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--yel);padding:10px 14px;box-shadow:0 0 0 3px var(--yel);font-weight:800;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9;max-width:90vw;text-align:center}
+#toast.show{opacity:1}
+.weak .w{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.weak .cnt{font-size:9px;white-space:nowrap}
+.cnt .r{color:var(--grn)}.cnt .e{color:var(--red)}
+.small{font-size:13px;opacity:.8}
+.link{background:none;border:0;color:#d9d2ff;text-decoration:underline;font:inherit;font-size:13px;cursor:pointer;display:block;margin:14px auto 0}
+code{background:var(--ink);color:var(--yel);padding:2px 6px;direction:ltr;display:inline-block}
+</style>
+</head>
+<body>
+<div id="app"><div class="box center">טוען…</div></div>
+<div id="toast"></div>
+<script>
+'use strict';
+/* ---------- state ---------- */
+const LS='ezrahut-pixel-v1';
+const S=Object.assign({xp:0,streak:0,best:0,stats:{},prog:{},snd:true},(()=>{try{return JSON.parse(localStorage.getItem(LS))||{}}catch(e){return{}}})());
+const save=()=>{try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}};
+const app=document.getElementById('app');
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const pick=a=>a[Math.random()*a.length|0];
+const $=s=>app.querySelector(s);
+let D,C={},R=null,timer=null;
+
+const WS={elections:{icon:'🗳️',col:'#ff6fa5',mon:'#ff9ccb'},culture:{icon:'🎭',col:'#8f5cff',mon:'#b99bff'},limits:{icon:'⚖️',col:'#ff9f1c',mon:'#ffc15e'},obedience:{icon:'🚨',col:'#ff4d5e',mon:'#ff9a9a'},rights:{icon:'✊',col:'#2ec27e',mon:'#86e8b2'},defense:{icon:'🛡️',col:'#3a86ff',mon:'#8fb8ff'}};
+const STAGES=[
+ {k:'flash',ic:'🃏',n:'קלפים',d:'הפוך קלף – ידעתי / לא ידעתי'},
+ {k:'id',ic:'👾',n:'זיהוי',d:'סיטואציה ← בחר מושג. פגע במפלצת!'},
+ {k:'build',ic:'🧱',n:'בונה תשובה',d:'הצג ← הסבר ← צטט ← קשר'},
+ {k:'boss',ic:'👑',n:'בוס',d:'10 שאלות מעורבות, טיימר, 3 לבבות'}];
+const TITLES=['טירון/ית','מצביע/ה','פעיל/ה','חבר/ת מועצה','ח״כ','שר/ה','יו״ר הכנסת','שופט/ת עליון','נשיא/ה','אגדה דמוקרטית'];
+const BOSS_T=20;
+
+/* ---------- pixel sprites ---------- */
+function sprite(rows,pal,px,cls){const h=rows.length,w=rows[0].length;let r='';rows.forEach((row,y)=>{let x=0;while(x<w){const ch=row[x];if(ch==='.'){x++;continue}let e=x;while(e<w&&row[e]===ch)e++;r+=`<rect x="${x}" y="${y}" width="${e-x}" height="1" fill="${pal[ch]}"/>`;x=e}});return `<svg class="${cls||''}" viewBox="0 0 ${w} ${h}" width="${w*px}" height="${h*px}" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`}
+const MON=["....kkkk....","..kkggggkk..",".kggggggllk.","kggwwggwwggk","kggwkggwkggk","kggggggggggk","kgggkkkkgggk","kggggrrggggk",".kggggggggk.","..kkkkkkkk.."];
+const CROWN=["..y..yy..y..","..yyyyyyyy.."];
+const HEART=[".rr.rr.","rwrrrrr","rrrrrrr",".rrrrr.","..rrr..","...r..."];
+const STAR=["...y...","..yyy..","yyyyyyy",".yyyyy.","..yyy..",".yy.yy.","yy...yy"];
+const heart=on=>sprite(HEART,{r:on?'#ff4d5e':'#5b5470',w:on?'#fff':'#7a7390'},3);
+const star=on=>sprite(STAR,{y:on?'#ffd23f':'#5b5470'},3);
+const stars=n=>[0,1,2].map(k=>star(k<n)).join(' ');
+const monster=(col,boss)=>sprite(boss?CROWN.concat(MON):MON,{k:'#1d1a2f',g:col,l:'#fff',w:'#fff',r:'#ff4d5e',y:'#ffd23f'},boss?9:7,'mon');
+
+/* ---------- sound ---------- */
+let AC;
+const SFX={ok:[[660,.07],[990,.12]],bad:[[220,.12],[150,.2]],flip:[[520,.05]],hit:[[880,.04],[440,.06]],win:[[523,.1],[659,.1],[784,.1],[1047,.3]],lose:[[392,.15],[330,.15],[262,.3]],lvl:[[784,.08],[988,.08],[1175,.08],[1568,.25]]};
+function sfx(k){if(!S.snd)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();let t=AC.currentTime;for(const [f,d] of SFX[k]){const o=AC.createOscillator(),g=AC.createGain();o.type='square';o.frequency.value=f;g.gain.setValueAtTime(.05,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d);t+=d*.9}}catch(e){}}
+
+/* ---------- helpers ---------- */
+let toastT;
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1800)}
+const lvl=xp=>{let L=1;while(50*L*(L+1)<=xp)L++;return L};
+const ttl=L=>TITLES[Math.min(L,TITLES.length)-1];
+function hud(){const L=lvl(S.xp),a=50*L*(L-1),b=50*L*(L+1),p=Math.round((S.xp-a)/(b-a)*100);
+ return `<div class="hud" id="hud"><span class="lv px">LV${L}</span><span class="ttl">${ttl(L)}</span><div class="xpbar"><i style="width:${p}%"></i></div><span class="px">${S.xp}XP</span><span class="px" title="רצף">🔥${S.streak}</span><button class="icb" id="snd" aria-label="צליל">${S.snd?'🔊':'🔇'}</button></div>`}
+function bindHud(){const b=document.getElementById('snd');if(b)b.onclick=()=>{S.snd=!S.snd;save();b.textContent=S.snd?'🔊':'🔇'}}
+function refreshHud(){const h=document.getElementById('hud');if(h){h.outerHTML=hud();bindHud()}}
+function gain(n){const b=lvl(S.xp);S.xp+=n;const a=lvl(S.xp);if(a>b){setTimeout(()=>{toast(`⬆️ רמה ${a}! ${ttl(a)}`);sfx('lvl')},300)}save()}
+const byWorld=w=>D.concepts.filter(c=>c.world===w).map(c=>c.id);
+const splitW=n=>{const i=n.indexOf(':');return i<0?['',n]:[n.slice(0,i),n.slice(i+1).trim()]};
+const box=id=>S.stats[id]?S.stats[id].b:1;
+const weakFirst=ids=>shuffle(ids).sort((a,b)=>box(a)-box(b));
+function record(id,ok){const s=S.stats[id]||(S.stats[id]={r:0,w:0,b:1});if(ok){s.r++;s.b=Math.min(s.b+1,5)}else{s.w++;s.b=0}s.t=Date.now();save()}
+function weakIds(){return Object.keys(S.stats).filter(id=>C[id]&&S.stats[id].w>0&&S.stats[id].b<=1).sort((a,b)=>(S.stats[b].w-S.stats[b].r)-(S.stats[a].w-S.stats[a].r))}
+function worldStars(w){const p=S.prog[w]||{};return STAGES.reduce((s,st)=>s+(p[st.k]||0),0)}
+function cut(s,n){if(s.length<=n)return s;const k=s.lastIndexOf(' ',n);return s.slice(0,k>n*.5?k:n)+'…'}
+function firstSent(t){const p=t.split(/\.\s+/);let s=p[0];if(s.length<30&&p[1])s+='. '+p[1];return cut(s.replace(/\.$/,''),150)}
+function keyOf(id){const c=C[id];if(c.points.length>=2&&!/^סכנות/.test(c.points[0]))return c.points.slice(0,2).join('; ');return firstSent(c.definition)}
+function distractors(id,n){const c=C[id],out=[];const tryAdd=x=>{if(out.length<n&&x!==id&&C[x]&&!out.includes(x))out.push(x)};
+ shuffle(c.confusables||[]).forEach(tryAdd);shuffle(byWorld(c.world)).forEach(tryAdd);shuffle(Object.keys(C)).forEach(tryAdd);return out}
+/* snippets of definitions that show where they actually differ */
+function snippets(ids){const defs=ids.map(x=>C[x].definition);
+ return defs.map((d,i)=>{let p=0;defs.forEach((e,j)=>{if(j===i)return;let k=0;while(k<d.length&&d[k]===e[k])k++;p=Math.max(p,k)});
+  let st=0;if(p>20){st=d.lastIndexOf(' ',p-12);if(st<0)st=0}
+  return (st>0?'…':'')+cut(d.slice(st).trim(),150)})}
+function maskName(c){return esc(c.definition).split(esc(c.name)).join('_____')}
+/* 3 candidate sentences from the scenario for the "צטט" step */
+function quoteOpts(sc,id){
+ const norm=s=>s.replace(/[.,:;!?"״“”׳…\-–()]/g,' ').replace(/\s+/g,' ').trim();
+ const qw=norm(sc.quote).split(' ');const qs=new Set(qw);
+ const bad=f=>{const w=norm(f).split(' ');const a=w.filter(x=>qs.has(x)).length;return a/w.length>=.5||a/qw.length>=.5};
+ let fr=sc.text.split(/[.,:;!?"״“”]+/).map(s=>s.trim()).filter(s=>s.split(/\s+/).length>=3&&!bad(s));
+ if(fr.length<2){const big=fr.findIndex(f=>f.split(/\s+/).length>=7);
+  if(big>=0){const w=fr[big].split(/\s+/),m=Math.ceil(w.length/2);fr.splice(big,1,w.slice(0,m).join(' '),w.slice(m).join(' '))}}
+ fr=fr.map(f=>{const w=f.split(/\s+/);return w.length>12?w.slice(0,12).join(' ')+'…':f});
+ for(const x of distractors(id,4)){if(fr.length>=2)break;const q=pick(C[x].scenarios).quote;if(!fr.includes(q))fr.push(q)}
+ return shuffle([{html:esc(sc.quote),ok:true},...shuffle(fr).slice(0,2).map(f=>({html:esc(f),ok:false,why:'המשפט הזה לא מדגים את המושג – חפש/י את המשפט שמראה את ההגדרה בפעולה.'}))])}
+function defHtml(c){return `<div class="def"><div class="dn">${esc(c.name)} <span class="pg">עמ׳ ${c.page}</span></div><p>${esc(c.definition)}</p>${c.points.length?'<ul>'+c.points.map(p=>`<li>${esc(p)}</li>`).join('')+'</ul>':''}${c.mnemonic?`<div class="mn">🔑 ${esc(c.mnemonic)}</div>`:''}</div>`}
+function clearTimer(){if(timer){clearInterval(timer);timer=null}}
+
+/* ---------- boot ---------- */
+fetch('concepts.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(d=>{D=d;d.concepts.forEach(c=>C[c.id]=c);showMap()}).catch(()=>{
+ app.innerHTML=`<div class="box"><h3>⚠️ לא הצלחתי לטעון את concepts.json</h3><p>המשחק צריך לרוץ דרך שרת מקומי (פתיחה בלחיצה כפולה על הקובץ לא תעבוד).</p><p>פתח/י טרמינל בתיקייה של המשחק והרץ/י:</p><p><code>python3 -m http.server 8000</code></p><p>ואז היכנס/י בדפדפן ל-<code>http://localhost:8000</code></p></div>`});
+
+/* ---------- map ---------- */
+function showMap(){clearTimer();R=null;
+ const xs=[26,72,30,70,28,72],H=D.worlds.length*112+30;
+ const nodes=D.worlds.map((w,i)=>{const nm=splitW(w.name)[1],s=WS[w.id]||{icon:'⭐',col:'#888'};
+  return `<button class="node" style="left:${xs[i]}%;top:${i*112+26}px;--c:${s.col}" data-w="${w.id}"><span class="nn px">${i+1}</span><span class="ic">${s.icon}</span><span class="nm">${esc(nm)}</span><span class="ns px">★${worldStars(w.id)}/12</span></button>`}).join('');
+ const pts=xs.slice(0,D.worlds.length).map((x,i)=>`${x},${i*112+66}`).join(' ');
+ const wk=weakIds().length;
+ app.innerHTML=hud()+`<div class="title">⚔️ אזרחות פיקסל ⚔️</div><div class="subt">${esc(D.meta.title)}</div>
+ <div class="map" style="height:${H}px"><div class="cloud" style="left:12%"></div><div class="cloud" style="left:62%;top:30px"></div>
+ <svg class="path" viewBox="0 0 100 ${H}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="#c9a46a" stroke-width="14" vector-effect="non-scaling-stroke"/><polyline points="${pts}" fill="none" stroke="#1d1a2f" stroke-width="3" stroke-dasharray="6 8" vector-effect="non-scaling-stroke"/></svg>${nodes}</div>
+ <button class="btn pink" id="weak">💔 המושגים החלשים שלי (${wk})</button>
+ <button class="btn gray" id="how">📝 איך בונים תשובה במבחן?</button>
+ <div class="small center" style="color:#d9d2ff;margin-top:8px">שיא רצף: ${S.best} 🔥</div>
+ <button class="link" id="reset">איפוס התקדמות</button>`;
+ bindHud();
+ app.querySelectorAll('.node').forEach(b=>b.onclick=()=>{sfx('flip');showWorld(b.dataset.w)});
+ $('#weak').onclick=showWeak;$('#how').onclick=showHow;
+ $('#reset').onclick=()=>{if(confirm('למחוק את כל ההתקדמות, ה-XP והסטטיסטיקה?')){S.xp=0;S.streak=0;S.best=0;S.stats={};S.prog={};save();showMap()}};
+ window.scrollTo(0,0)}
+
+function showHow(){const a=D.meta.answer_structure;
+ app.innerHTML=hud()+`<div class="box"><h3>📝 מבנה תשובה בארבעה צעדים</h3>${a.map((s,i)=>{const [l,d]=s.split(' – ');return `<p><span class="tag">${i+1}. ${esc(l)}</span> ${esc(d||'')}</p>`}).join('')}
+ <p class="small">בשלב "בונה תשובה" בכל עולם מתרגלים בדיוק את זה: מזהים מושג, בוחרים הגדרה, מצטטים משפט מהקטע ומקשרים בין הציטוט להגדרה.</p></div><button class="btn" id="back">◀ חזרה למפה</button>`;
+ bindHud();$('#back').onclick=showMap}
+
+/* ---------- world ---------- */
+function showWorld(wid){clearTimer();R=null;const w=D.worlds.find(x=>x.id===wid),s=WS[wid],p=S.prog[wid]||{};
+ const ids=byWorld(wid);
+ app.innerHTML=hud()+`<div class="box center" style="background:${s.col};color:#fff"><div style="font-size:34px">${s.icon}</div><h2 style="text-shadow:2px 2px 0 #0006">${esc(w.name)}</h2><div>${monster(s.mon)}</div></div>
+ ${STAGES.map((st,i)=>`<button class="btn stage ${['','pink','blue','red'][i]}" data-k="${st.k}"><span class="si">${st.ic}</span><span>${i+1}. ${st.n}<br><span class="sd">${st.d}</span></span><span class="stars">${stars(p[st.k]||0)}</span></button>`).join('')}
+ <div class="box"><b>${ids.length} מושגים בעולם:</b><div class="chips" style="margin-top:8px">${ids.map(id=>{const st=S.stats[id];const cl=!st?'':st.b<=1&&st.w>0?'w':st.b>=3?'g':'';return `<span class="chip ${cl}">${esc(C[id].name)}</span>`}).join('')}</div>
+ <div class="small" style="margin-top:8px">ורוד = חלש · ירוק = שולט</div></div>
+ <button class="btn gray" id="back">◀ חזרה למפה</button>`;
+ bindHud();
+ app.querySelectorAll('.stage').forEach(b=>b.onclick=()=>startRun(b.dataset.k,wid));
+ $('#back').onclick=showMap;window.scrollTo(0,0)}
+
+/* ---------- weak ---------- */
+function showWeak(){clearTimer();R=null;const ids=weakIds();
+ app.innerHTML=hud()+`<div class="box"><h3>💔 המושגים החלשים שלי</h3><p class="small">מושגים שטעית בהם ועוד לא ענית עליהם נכון פעמיים ברצף. לחיצה על מושג מציגה את ההגדרה.</p></div>
+ ${ids.length?`<button class="btn pink" id="prac">🎯 תרגל רק אותם (${ids.length})</button>`:'<div class="box center">אין מושגים חלשים כרגע 🎉<br>שחק/י בעולמות והם יופיעו כאן אם תטעה/י.</div>'}
+ <div class="weak">${ids.map(id=>{const s=S.stats[id];return `<details class="box"><summary class="w"><span>${esc(C[id].name)}</span><span class="cnt px"><span class="r">✔${s.r}</span> <span class="e">✘${s.w}</span></span></summary>${defHtml(C[id])}</details>`}).join('')}</div>
+ <button class="btn gray" id="back">◀ חזרה למפה</button>`;
+ bindHud();if(ids.length)$('#prac').onclick=()=>startRun('practice',null,ids);$('#back').onclick=showMap;window.scrollTo(0,0)}
+
+/* ---------- runs ---------- */
+function startRun(kind,wid,ids){clearTimer();
+ const pool=ids||byWorld(wid);let q=[];
+ if(kind==='flash')q=weakFirst(pool).map(id=>({t:'flash',id}));
+ else if(kind==='id'){const ord=weakFirst(pool);for(let r=0;q.length<10;r++){let any=false;for(const id of ord){const sc=C[id].scenarios[r];if(sc&&q.length<10){q.push({t:'id',id,sc});any=true}}if(!any)break}}
+ else if(kind==='build')q=weakFirst(pool).slice(0,5).map(id=>({t:'build',id,sc:pick(C[id].scenarios)}));
+ else if(kind==='boss'){const ord=weakFirst(pool);for(let i=0;i<10;i++){const id=ord[i%ord.length];q.push({t:pick(['id','id','def','name','quote']),id,sc:pick(C[id].scenarios)})}q=shuffle(q)}
+ else if(kind==='practice'){q=shuffle(pool).map(id=>({t:'id',id,sc:pick(C[id].scenarios)})).concat(shuffle(pool).map(id=>({t:pick(['def','name','quote']),id,sc:pick(C[id].scenarios)})))}
+ R={kind,wid,q,i:0,hearts:(kind==='flash'||kind==='practice')?Infinity:3,xp0:S.xp,missed:new Set(),ok:0,firstTry:new Set(),seen:new Set()};
+ R.hp=R.max=(kind==='id'||kind==='boss')?q.length:0;
+ next()}
+
+function next(){clearTimer();if(R.hearts<=0)return gameOver();if(R.i>=R.q.length)return win();const q=R.q[R.i];
+ if(q.t==='flash')renderFlash(q);else if(q.t==='build')renderBuild(q);else renderChoice(q);window.scrollTo(0,0)}
+
+function runTitle(){if(R.kind==='practice')return '🎯 תרגול מושגים חלשים';const st=STAGES.find(s=>s.k===R.kind);return `${st.ic} ${st.n} · ${esc(splitW(D.worlds.find(w=>w.id===R.wid).name)[1])}`}
+function topBar(){const p=Math.round(R.i/R.q.length*100);
+ const h=R.hearts===Infinity?'<span class="px" style="font-size:12px">∞</span>'+heart(true):[0,1,2].map(k=>heart(k<R.hearts)).join('');
+ return `<div class="top"><button class="x" id="quit" aria-label="יציאה">✕</button><div class="bar"><i style="width:${p}%"></i></div><div class="hearts" id="hearts">${h}</div></div><div class="sub"><span>${runTitle()}</span><span class="px">🔥${S.streak}</span></div>`}
+function arena(){if(R.kind!=='id'&&R.kind!=='boss')return '';const boss=R.kind==='boss';const col=(WS[R.wid]||{}).mon||'#7be0a8';
+ return `<div class="arena" id="arena">${monster(col,boss)}<div class="hp"><i id="hpb" style="width:${R.hp/R.max*100}%"></i></div></div>`}
+function bindTop(){$('#quit').onclick=()=>{clearTimer();R.kind==='practice'?showWeak():showWorld(R.wid)}}
+function setHearts(){const h=document.getElementById('hearts');if(h&&R.hearts!==Infinity)h.innerHTML=[0,1,2].map(k=>heart(k<R.hearts)).join('')}
+
+function onRight(id,silentRecord){if(!silentRecord)record(id,true);S.streak++;S.best=Math.max(S.best,S.streak);const x=10+Math.min(S.streak,10);gain(x);R.ok++;sfx('ok');return x}
+function onWrong(id){record(id,false);S.streak=0;save();R.missed.add(id);sfx('bad');
+ if(R.hearts!==Infinity){R.hearts--;setHearts();const h=document.getElementById('hearts');if(h){h.classList.remove('shake');void h.offsetWidth;h.classList.add('shake')}}}
+function hitMonster(){if(!R.max)return;R.hp=Math.max(0,R.hp-1);const a=document.getElementById('arena');if(!a)return;
+ document.getElementById('hpb').style.width=(R.hp/R.max*100)+'%';a.classList.remove('hit');void a.offsetWidth;a.classList.add(R.hp===0?'dead':'hit');
+ const d=document.createElement('div');d.className='dmg px';d.textContent='-1';a.appendChild(d);setTimeout(()=>sfx('hit'),120)}
+
+/* ---- choice questions ---- */
+function buildChoice(q){const c=C[q.id];
+ if(q.t==='id'){const ids=shuffle([q.id,...distractors(q.id,3)]);
+  return {prompt:`<span class="tag">🎬 איזה מושג מתאים לסיטואציה?</span><div class="scene">${esc(q.sc.text)}</div>`,opts:ids.map(x=>({html:esc(C[x].name),ok:x===q.id,id:x}))}}
+ if(q.t==='name'){const ids=shuffle([q.id,...distractors(q.id,3)]);
+  return {prompt:`<span class="tag">📖 איזה מושג מוגדר כך?</span><div class="prompt-def">${maskName(c)}</div>`,opts:ids.map(x=>({html:esc(C[x].name),ok:x===q.id,id:x}))}}
+ if(q.t==='def'){const ids=shuffle([q.id,...distractors(q.id,3)]);const sn=snippets(ids);
+  return {prompt:`<span class="tag">🧠 מה ההגדרה?</span><div class="scene">${esc(c.name)}</div>`,opts:ids.map((x,k)=>({html:esc(sn[k]),ok:x===q.id,id:x}))}}
+ if(q.t==='quote')return {prompt:`<span class="tag">💬 איזה משפט מדגים את: ${esc(c.name)}?</span><div class="scene">${esc(q.sc.text)}</div>`,opts:quoteOpts(q.sc,q.id)};
+}
+function renderChoice(q){const b=q.b||(q.b=buildChoice(q));const boss=R.kind==='boss';
+ app.innerHTML=topBar()+arena()+`<div class="box">${b.prompt}${boss?'<div class="timer" id="tm"><i style="width:100%"></i></div>':''}</div><div class="opts">${b.opts.map((o,k)=>`<button class="opt" data-k="${k}">${o.html}</button>`).join('')}</div><div id="fb"></div>`;
+ bindTop();
+ const btns=[...app.querySelectorAll('.opt')];
+ const answer=k=>{clearTimer();btns.forEach((x,j)=>{x.disabled=true;if(b.opts[j].ok)x.classList.add('ok')});
+  const o=k>=0?b.opts[k]:null,ok=!!(o&&o.ok);let extra='';
+  if(o&&!ok){btns[k].classList.add('bad');if(o.id&&C[o.id])extra=`<div class="why">מה שבחרת – <b>${esc(C[o.id].name)}</b>: ${esc(firstSent(C[o.id].definition))}</div>`;else if(o.why)extra=`<div class="why">${esc(o.why)}</div>`}
+  if(k<0)extra='<div class="why">⏰ נגמר הזמן!</div>';
+  let x=0;if(ok){x=onRight(q.id);hitMonster()}else{onWrong(q.id);
+   const copy={t:q.t,id:q.id,sc:q.sc};if(R.kind==='boss')R.q.push(copy);else R.q.splice(Math.min(R.i+3,R.q.length),0,copy)}
+  refreshTop();
+  showFb(ok,q.id,extra,x)};
+ btns.forEach((x,k)=>x.onclick=()=>answer(k));
+ if(boss){let left=BOSS_T*10;const tm=document.getElementById('tm'),bar=tm.firstChild;
+  timer=setInterval(()=>{left--;bar.style.width=(left/(BOSS_T*10)*100)+'%';if(left<=50)tm.classList.add('low');if(left<=0)answer(-1)},100)}}
+function refreshTop(){const s=app.querySelector('.sub .px');if(s)s.textContent='🔥'+S.streak}
+function showFb(ok,id,extra,x){const c=C[id];const fb=document.getElementById('fb');
+ fb.innerHTML=`<div class="fb ${ok?'good':'bad'}"><div class="fbh">${ok?`✔ נכון! <span class="px">+${x}XP</span>`:`✘ לא נכון. התשובה: ${esc(c.name)}`}</div>${extra}${ok?`<details><summary>הצג הגדרה</summary>${defHtml(c)}</details>`:defHtml(c)}<button class="btn" id="go">המשך ◀</button></div>`;
+ const go=document.getElementById('go');go.onclick=()=>{R.i++;next()};
+ setTimeout(()=>fb.scrollIntoView({behavior:'smooth',block:'nearest'}),50)}
+
+/* ---- flash cards ---- */
+function renderFlash(q){const c=C[q.id];
+ app.innerHTML=topBar()+`<div class="card" id="card"><div class="small center">${esc(splitW(D.worlds.find(w=>w.id===c.world).name)[1])} · עמ׳ ${c.page}</div><div class="big" style="margin-top:20px">${esc(c.name)}</div><div class="hint">👆 נסה/י להיזכר בהגדרה ואז לחץ/י להפוך</div></div><div id="fbtns"></div>`;
+ bindTop();const card=$('#card');
+ card.onclick=()=>{if(card.dataset.f)return;card.dataset.f=1;sfx('flip');card.classList.add('flip');
+  setTimeout(()=>{card.classList.add('back');card.innerHTML=defHtml(c);card.classList.remove('flip');
+   $('#fbtns').innerHTML=`<div class="row"><button class="btn red" id="no">✘ לא ידעתי</button><button class="btn grn" id="yes">✔ ידעתי</button></div>`;
+   $('#yes').onclick=()=>{record(q.id,true);if(!R.seen.has(q.id))R.firstTry.add(q.id);R.seen.add(q.id);S.streak++;S.best=Math.max(S.best,S.streak);gain(5);sfx('ok');R.i++;next()};
+   $('#no').onclick=()=>{record(q.id,false);R.seen.add(q.id);R.missed.add(q.id);S.streak=0;save();sfx('bad');
+    if((q.rep||0)<2)R.q.splice(Math.min(R.i+3,R.q.length),0,{t:'flash',id:q.id,rep:(q.rep||0)+1});R.i++;next()}},150)}}
+
+/* ---- answer builder ---- */
+const LABELS=()=>D.meta.answer_structure.map(s=>s.split(' – ')[0]);
+function renderBuild(q){const c=C[q.id];q.step=q.step||0;const L=LABELS();
+ if(!q.parts){const other=distractors(q.id,1)[0];const qt=`"${esc(q.sc.quote)}"`;
+  q.parts=[esc(c.name),esc(cut(c.definition,110)),qt,`במשפט ${qt} רואים את ${esc(c.name)}: ${esc(keyOf(q.id))}`];
+  const dids=shuffle([q.id,...distractors(q.id,2)]),sn=snippets(dids);
+  q.opts=[
+   shuffle([q.id,...distractors(q.id,3)]).map(x=>({html:esc(C[x].name),ok:x===q.id,id:x})),
+   dids.map((x,k)=>({html:esc(sn[k]),ok:x===q.id,why:x===q.id?'':`זו ההגדרה של "${C[x].name}".`})),
+   quoteOpts(q.sc,q.id),
+   shuffle([{html:q.parts[3],ok:true},
+    {html:`במשפט ${qt} מתואר מה שקרה בסיפור, ולכן זה ${esc(c.name)}.`,ok:false,why:'זה רק חוזר על הסיפור. קשר טוב מחבר בין הציטוט לבין ההגדרה.'},
+    {html:`במשפט ${qt} רואים את ${esc(c.name)}: ${esc(keyOf(other))}`,ok:false,why:`ההסבר הזה שייך למושג אחר: "${C[other].name}".`}])];
+  q.order=shuffle([0,1,2,3]);q.ord=0}
+ const hints=['איזה מושג מודגם בסיטואציה?','בחר/י את ההגדרה של המושג','בחר/י את המשפט מהסיטואציה שמדגים את המושג','בחר/י משפט קישור שמחבר ציטוט ↔ הגדרה','עכשיו סדר/י את 4 החלקים לפי סדר התשובה'];
+ const frame=`<div class="frame">${L.map((l,k)=>{const done=q.step>4?true:(q.step===4?k<q.ord:k<q.step);const on=q.step<4?k===q.step:(q.step===4&&k===q.ord);
+  return `<div class="slot ${done?'done':''} ${on?'on':''}"><b>${k+1}. ${esc(l)}</b><span class="${done?'':'st'}">${done?q.parts[k]:'…'}</span></div>`}).join('')}</div>`;
+ let body='';
+ if(q.step<4)body=`<div class="opts">${q.opts[q.step].map((o,k)=>`<button class="opt" data-k="${k}">${o.html}</button>`).join('')}</div><div id="why"></div>`;
+ else if(q.step===4)body=`<div class="opts blocks">${q.order.map(k=>`<button class="opt" data-b="${k}" ${k<q.ord?'disabled style="opacity:.35"':''}>${q.parts[k]}</button>`).join('')}</div>`;
+ else body=`<div class="box model"><h3>✅ תשובה מלאה</h3>${L.map((l,k)=>`<p><span class="lab">${esc(l)}</span>${k===1?esc(c.definition):q.parts[k]}</p>`).join('')}${c.mnemonic?`<div class="mn">🔑 ${esc(c.mnemonic)}</div>`:''}<button class="btn" id="go">המשך ◀</button></div>`;
+ app.innerHTML=topBar()+`<div class="box"><span class="tag">🎬 סיטואציה</span><div class="scene">${esc(q.sc.text)}</div></div><div class="sub" style="margin-top:4px"><span>👉 ${hints[Math.min(q.step,4)]}</span></div>${frame}${body}`;
+ bindTop();
+ if(q.step<4)app.querySelectorAll('.opt').forEach(btn=>btn.onclick=()=>{const o=q.opts[q.step][+btn.dataset.k];
+  if(o.ok){sfx('ok');q.step++;if(q.step===4&&!q.err){}renderBuild(q)}
+  else{btn.disabled=true;btn.classList.add('bad');if(!q.err){q.err=true}onWrong(q.id);
+   document.getElementById('why').innerHTML=o.why?`<div class="fb bad"><div class="why">${esc(o.why)}</div></div>`:'';
+   if(R.hearts<=0){app.querySelectorAll('.opt').forEach(b=>b.disabled=true);const run=R;setTimeout(()=>{if(R===run)gameOver()},700)}}});
+ else if(q.step===4)app.querySelectorAll('[data-b]').forEach(btn=>btn.onclick=()=>{const k=+btn.dataset.b;
+  if(k===q.ord){sfx('flip');q.ord++;if(q.ord===4){q.step=5;if(!q.err){const x=onRight(q.id);toast(`✔ תשובה מושלמת! +${x}XP`)}else{sfx('ok')}}renderBuild(q)}
+  else{btn.classList.remove('shake');void btn.offsetWidth;btn.classList.add('shake');toast(`רמז: עכשיו "${L[q.ord]}"`)}});
+ else $('#go').onclick=()=>{R.i++;next()}}
+
+/* ---- end screens ---- */
+function win(){clearTimer();const k=R.kind;let st=3,bonus=0;
+ if(k==='flash'){const n=new Set(R.q.map(q=>q.id)).size;const f=R.firstTry.size/n;st=f>=.9?3:f>=.6?2:1;bonus=20}
+ else if(k==='practice'){st=0;bonus=15}
+ else{st=Math.max(1,R.hearts);bonus=k==='boss'?50:20}
+ gain(bonus);
+ if(R.wid&&k!=='practice'){const p=S.prog[R.wid]||(S.prog[R.wid]={});p[k]=Math.max(p[k]||0,st);save()}
+ sfx('win');
+ const missed=[...R.missed];const still=k==='practice'?weakIds().length:0;
+ app.innerHTML=hud()+`<div class="box center"><h2>${k==='boss'?'👑 הבוס הובס!':k==='practice'?'🎯 סיימת תרגול!':'🎉 שלב הושלם!'}</h2>
+ ${st?`<div style="margin:10px 0">${stars(st).replace(/width="21" height="21"/g,'width="36" height="36"')}</div>`:''}
+ <div class="px" style="font-size:12px;margin:10px 0">+${S.xp-R.xp0} XP</div>
+ ${k==='practice'?`<p>נשארו ${still} מושגים חלשים.</p>`:''}
+ ${missed.length?`<p><b>כדאי לחזור על:</b></p><div class="chips" style="justify-content:center">${missed.map(id=>`<span class="chip w">${esc(C[id].name)}</span>`).join('')}</div>`:'<p>בלי אף טעות! 💪</p>'}</div>
+ <button class="btn grn" id="again">🔁 שוב</button>${k==='practice'?'<button class="btn pink" id="wk">💔 לרשימת החלשים</button>':'<button class="btn" id="world">◀ חזרה לעולם</button>'}<button class="btn gray" id="map">🗺️ מפה</button>`;
+ bindHud();endBinds()}
+function gameOver(){clearTimer();sfx('lose');const missed=[...R.missed];
+ app.innerHTML=hud()+`<div class="box center"><h2>💔 נגמרו הלבבות</h2><div>${monster((WS[R.wid]||{}).mon||'#aaa',R.kind==='boss')}</div><p>לא נורא – המושגים שטעית בהם יחזרו מוקדם יותר בפעם הבאה.</p>
+ <div class="chips" style="justify-content:center">${missed.map(id=>`<span class="chip w">${esc(C[id].name)}</span>`).join('')}</div></div>
+ ${missed.map(id=>`<details class="box"><summary>${esc(C[id].name)}</summary>${defHtml(C[id])}</details>`).join('')}
+ <button class="btn grn" id="again">🔁 נסה/י שוב</button><button class="btn" id="world">◀ חזרה לעולם</button><button class="btn gray" id="map">🗺️ מפה</button>`;
+ bindHud();endBinds()}
+function endBinds(){const k=R.kind,w=R.wid;
+ $('#again').onclick=()=>k==='practice'?(weakIds().length?startRun('practice',null,weakIds()):showWeak()):startRun(k,w);
+ const wb=$('#world');if(wb)wb.onclick=()=>showWorld(w);const wk=$('#wk');if(wk)wk.onclick=showWeak;$('#map').onclick=showMap;window.scrollTo(0,0)}
+</script>
+</body>
+</html>
